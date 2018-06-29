@@ -8,6 +8,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+bool weight_lt(struct Weight const wt0, struct Weight const wt1)
+{
+    return wt0.weight < wt1.weight;
+}
+
+bool weight_gt(struct Weight const wt0, struct Weight const wt1)
+{
+    return wt0.weight > wt1.weight;
+}
+
+bool weight_eq(struct Weight const wt0, struct Weight const wt1)
+{
+    return wt0.weight == wt1.weight;
+}
+
+bool weight_gt_zero(struct Weight const wt0)
+{
+    return wt0.weight > 0;
+}
+
+struct Weight weight_sum(struct Weight const wt0, struct Weight const wt1)
+{
+    return (struct Weight) {wt0.weight + wt1.weight};
+}
+
+struct Weight weight_difference(struct Weight const wt0, struct Weight const wt1)
+{
+    return (struct Weight) {wt0.weight - wt1.weight};
+}
+
+struct Weight default_weight()
+{
+    return (struct Weight) {1};
+}
+
 void add_edge(struct Graph *g, int v, int w) {
     g->adjmat[v][w] = true;
     g->adjmat[w][v] = true;
@@ -32,10 +67,10 @@ void populate_bit_complement_nd(struct Graph *g) {
 
 // Checks if a set of vertices induces a clique
 bool check_clique(struct Graph* g, struct VtxList* clq) {
-    long total_wt = 0;
+    struct Weight total_wt = {};
     for (int i=0; i<clq->size; i++)
-        total_wt += g->weight[clq->vv[i]];
-    if (total_wt == clq->total_wt)
+        total_wt = weight_sum(total_wt, g->weight[clq->vv[i]]);
+    if (weight_eq(total_wt, clq->total_wt))
         return true;
 
     for (int i=0; i<clq->size-1; i++)
@@ -51,7 +86,6 @@ struct Graph *new_graph(int n)
     g->n = n;
     g->degree = calloc(n, sizeof(*g->degree));
     g->weight = calloc(n, sizeof(*g->weight));
-    g->weighted_deg = calloc(n, sizeof(*g->weighted_deg));
     g->adjmat = calloc(n, sizeof(*g->adjmat));
     g->bit_complement_nd = calloc(n, sizeof(*g->bit_complement_nd));
     for (int i=0; i<n; i++) {
@@ -68,7 +102,6 @@ void free_graph(struct Graph *g)
         free(g->bit_complement_nd[i]);
     }
     free(g->degree);
-    free(g->weighted_deg);
     free(g->weight);
     free(g->adjmat);
     free(g->bit_complement_nd);
@@ -113,7 +146,7 @@ struct Graph *readGraph(char* filename) {
                 printf("%d edges\n", medges);
                 g = new_graph(nvertices);
                 for (int i=0; i<nvertices; i++)
-                    g->weight[i] = 1l;   // default weight
+                    g->weight[i] = default_weight();
                 break;
             case 'e':
                 if (sscanf(line, "e %d %d", &v, &w)!=2)
@@ -124,7 +157,7 @@ struct Graph *readGraph(char* filename) {
             case 'n':
                 if (sscanf(line, "n %d %ld", &v, &wt)!=2)
                     fail("Error reading a line beginning with n.\n");
-                g->weight[v-1] = wt;
+                g->weight[v-1] = (struct Weight) {wt};
                 break;
             }
         }
@@ -140,7 +173,7 @@ void init_VtxList(struct VtxList *l, int capacity)
 {
     l->vv = malloc(capacity * sizeof *l->vv);
     l->size = 0;
-    l->total_wt = 0;
+    l->total_wt = (struct Weight) {};
 }
 
 void destroy_VtxList(struct VtxList *l)
@@ -162,13 +195,13 @@ void destroy_UnweightedVtxList(struct UnweightedVtxList *l)
 void vtxlist_push_vtx(struct Graph *g, struct VtxList *L, int v)
 {
     L->vv[L->size++] = v;
-    L->total_wt += g->weight[v];
+    L->total_wt = weight_sum(L->total_wt, g->weight[v]);
 }
 
 void vtxlist_pop_vtx(struct Graph *g, struct VtxList *L)
 {
     L->size--;
-    L->total_wt -= g->weight[L->vv[L->size]];
+    L->total_wt = weight_difference(L->total_wt, g->weight[L->vv[L->size]]);
 }
 
 void copy_VtxList(struct VtxList *src, struct VtxList *dest)

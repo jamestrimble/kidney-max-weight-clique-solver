@@ -15,7 +15,7 @@
 #include <string.h>
 
 void colouring_bound(struct Graph *g, struct UnweightedVtxList *P,
-        long *cumulative_wt_bound, bool tavares_style)
+        struct Weight *cumulative_wt_bound, bool tavares_style)
 {
     unsigned long long *to_colour = calloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD, sizeof *to_colour);
     unsigned long long *candidates = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *candidates);
@@ -31,11 +31,11 @@ void colouring_bound(struct Graph *g, struct UnweightedVtxList *P,
         set_bit(to_colour, P->vv[i]);
 
     int v;
-    long bound = 0;
+    struct Weight bound = {};
 
     if (tavares_style) {
         int *col_class = malloc(g->n * sizeof *col_class);
-        long *residual_wt = malloc(g->n * sizeof *residual_wt);
+        struct Weight *residual_wt = malloc(g->n * sizeof *residual_wt);
         for (int i=0; i<P->size; i++)
             residual_wt[P->vv[i]] = g->weight[P->vv[i]];
 
@@ -43,23 +43,23 @@ void colouring_bound(struct Graph *g, struct UnweightedVtxList *P,
 
         while ((v=first_set_bit(to_colour, numwords))!=-1) {
             copy_bitset(to_colour, candidates, numwords);
-            long class_min_wt = residual_wt[v];
+            struct Weight class_min_wt = residual_wt[v];
             unset_bit(to_colour, v);
             int col_class_size = 1;
             col_class[0] = v;
             bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
             while ((v=first_set_bit(candidates, numwords))!=-1) {
-                if (residual_wt[v] < class_min_wt)
+                if (weight_lt(residual_wt[v], class_min_wt))
                     class_min_wt = residual_wt[v];
                 unset_bit(to_colour, v);
                 col_class[col_class_size++] = v;
                 bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
             }
-            bound += class_min_wt;
+            bound = weight_sum(bound, class_min_wt);
             for (int i=0; i<col_class_size; i++) {
                 int w = col_class[i];
-                residual_wt[w] -= class_min_wt;
-                if (residual_wt[w] > 0) {
+                residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
+                if (weight_gt_zero(residual_wt[w])) {
                     set_bit(to_colour, w);
                 } else {
                     cumulative_wt_bound[P->size] = bound;
@@ -75,18 +75,18 @@ void colouring_bound(struct Graph *g, struct UnweightedVtxList *P,
 
         while ((v=first_set_bit(to_colour, numwords))!=-1) {
             copy_bitset(to_colour, candidates, numwords);
-            long class_max_wt = g->weight[v];
+            struct Weight class_max_wt = g->weight[v];
             unset_bit(to_colour, v);
             P->vv[P->size++] = v;
             bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
             while ((v=first_set_bit(candidates, numwords))!=-1) {
-                if (g->weight[v] > class_max_wt)
+                if (weight_gt(g->weight[v], class_max_wt))
                     class_max_wt = g->weight[v];
                 unset_bit(to_colour, v);
                 P->vv[P->size++] = v;
                 bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
             }
-            bound += class_max_wt;
+            bound = weight_sum(bound, class_max_wt);
             for (int k=j; k<P->size; k++)
                 cumulative_wt_bound[k] = bound;
             j = P->size;
@@ -105,20 +105,21 @@ void expand(struct Graph *g, struct VtxList *C, struct UnweightedVtxList *P,
         check_for_timeout();
     if (is_timeout_flag_set()) return;
 
-    if (!quiet && P->size==0 && C->total_wt>incumbent->total_wt) {
+    if (!quiet && P->size==0 && weight_gt(C->total_wt, incumbent->total_wt)) {
         copy_VtxList(C, incumbent);
         long elapsed_msec = get_elapsed_time_msec();
         printf("New incumbent: weight %ld at time %ld ms after %ld expand calls\n",
-                incumbent->total_wt, elapsed_msec, *expand_call_count);
+                incumbent->total_wt.weight, elapsed_msec, *expand_call_count);
     }
 
-    long *cumulative_wt_bound = malloc(g->n * sizeof *cumulative_wt_bound);
+    struct Weight *cumulative_wt_bound = malloc(g->n * sizeof *cumulative_wt_bound);
     colouring_bound(g, P, cumulative_wt_bound, tavares_colour);
 
     struct UnweightedVtxList new_P;
     init_UnweightedVtxList(&new_P, g->n);
 
-    for (int i=P->size-1; i>=0 && C->total_wt+cumulative_wt_bound[i]>incumbent->total_wt; i--) {
+    for (int i=P->size-1; i>=0 &&
+            weight_gt(weight_sum(C->total_wt, cumulative_wt_bound[i]), incumbent->total_wt); i--) {
         int v = P->vv[i];
 
         new_P.size = 0;

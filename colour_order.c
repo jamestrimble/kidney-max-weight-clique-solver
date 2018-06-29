@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     // sort vertices in clique by index
     INSERTION_SORT(int, clq.vv, clq.size, clq.vv[j-1] > clq.vv[j])
 
-    printf("Weight of max clique: %ld\n", clq.total_wt);
+    printf("struct Weight of max clique: %ld\n", clq.total_wt.weight);
     printf("Calls to expand():          %ld\n", expand_call_count);
     printf("Time:                       %ld\n", elapsed_msec);
 
@@ -105,7 +105,7 @@ int main(int argc, char** argv) {
     printf("\n");
 
     printf("Stats: size, weight of max weight clique, ms elapsed, node count\n");
-    printf("%d %ld %ld %ld\n", clq.size, clq.total_wt, elapsed_msec, expand_call_count);
+    printf("%d %ld %ld %ld\n", clq.size, clq.total_wt.weight, elapsed_msec, expand_call_count);
 
     if (!check_clique(g, &clq))
         fail("*** Error: the set of vertices found do not induce a clique of the expected weight\n");

@@ -7,17 +7,35 @@
 #define BYTES_PER_WORD sizeof(unsigned long long)
 #define BITS_PER_WORD (CHAR_BIT * BYTES_PER_WORD)
 
+struct Weight
+{
+    long weight;
+};
+
+bool weight_lt(struct Weight const wt0, struct Weight const wt1);
+
+bool weight_gt(struct Weight const wt0, struct Weight const wt1);
+
+bool weight_eq(struct Weight const wt0, struct Weight const wt1);
+
+bool weight_gt_zero(struct Weight const wt0);
+
+struct Weight weight_sum(struct Weight const wt0, struct Weight const wt1);
+
+struct Weight weight_difference(struct Weight const wt0, struct Weight const wt1);
+
+struct Weight default_weight();
+
 struct Graph {
     int n;
     int *degree;
-    long *weighted_deg;
-    long *weight;
+    struct Weight *weight;
     bool **adjmat;
     unsigned long long **bit_complement_nd;
 };
 
 struct VtxList {
-    long total_wt;
+    struct Weight total_wt;
     int size;
     int *vv;
 };
