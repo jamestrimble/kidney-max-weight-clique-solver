@@ -1,4 +1,7 @@
 colour_order
-russian_dolls
 *.o
 *.swp
+*.log
+*.wclq
+*.json
+*.wclq.gz
