@@ -129,7 +129,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
     unsigned long long *branch_vv_bitset = malloc(numwords * sizeof *branch_vv_bitset);
     unsigned long long *bvvb = malloc(numwords * sizeof *branch_vv_bitset);
 
-    int top = 50;
+    int top = 1;
     bool can_backtrack = false;
     for (int i=0; i<top; i++) {
         for (int i=0; i<numwords; i++)
@@ -141,7 +141,8 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         }
         if (i == 0 || bitset_popcount(bvvb, numwords) < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
-            top = bitset_popcount(bvvb, numwords) * 2;
+            if (C->size != 0)
+                top = bitset_popcount(bvvb, numwords) * 2;
         }
     }
 
