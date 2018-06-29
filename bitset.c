@@ -13,6 +13,14 @@ void unset_bit(unsigned long long *bitset, int bit)
     bitset[bit/BITS_PER_WORD] &= ~(1ull << (bit%BITS_PER_WORD));
 }
 
+int bitset_popcount(unsigned long long *bitset, int num_words)
+{
+    int count = 0;
+    for (int i=num_words-1; i>=0; i--)
+        count += __builtin_popcountll(bitset[i]);
+    return count;
+}
+
 int last_set_bit(unsigned long long *bitset, int num_words)
 {
     for (int i=num_words-1; i>=0; i--)
@@ -36,6 +44,14 @@ void bitset_intersect_with(unsigned long long *bitset,
 {
     for (int i=0; i<num_words; i++)
         bitset[i] &= adj[i];
+}
+
+void bitset_intersect_with_complement(unsigned long long *bitset,
+                                     unsigned long long *adj,
+                                     int num_words)
+{
+    for (int i=0; i<num_words; i++)
+        bitset[i] &= ~adj[i];
 }
 
 void copy_bitset(unsigned long long *src,
