@@ -9,10 +9,12 @@
 #include "util.h"
 #include "colour_order_solver.h"
 
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 void colouring_bound(struct Graph *g,
         unsigned long long * P_bitset,
@@ -33,7 +35,31 @@ void colouring_bound(struct Graph *g,
     for (int i=0; i<g->n; i++)
         residual_wt[i] = g->weight[i];
 
+    int k = 14;
+    int K = 14;
+    int v_options[14];
+
     while ((v=first_set_bit(to_colour, numwords))!=-1) {
+        int pc = bitset_popcount(to_colour, numwords);
+        if (pc >= K) {
+            for (int i=0; i<k; i++) {
+                int w = first_set_bit(to_colour, numwords);
+                v_options[i] = w;
+                unset_bit(to_colour, w);
+            }
+            for (int i=0; i<k; i++) {
+                int w = v_options[i];
+                set_bit(to_colour, w);
+            }
+            double rnd = (double)rand() / ((double)RAND_MAX+1);
+            if (rnd == 0)
+                rnd = 0.00000001;
+            long rand_num = (long)k - 1 - (unsigned)(-6 * log(rnd));
+            if (rand_num < 0)
+                rand_num = 0;
+//            printf("%ld\n", rand_num);
+            v = v_options[rand_num];
+        }
         copy_bitset(to_colour, candidates, numwords);
         struct Weight class_min_wt = residual_wt[v];
         struct Weight class_max_wt = residual_wt[v];
@@ -98,13 +124,28 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         printf(" at time %ld ms after %ld expand calls\n", elapsed_msec, *expand_call_count);
     }
 
-    unsigned long long *branch_vv_bitset = calloc(numwords, sizeof *branch_vv_bitset);
-
     struct Weight target = weight_difference(incumbent->total_wt, C->total_wt);
 
-    colouring_bound(g, P_bitset, branch_vv_bitset, target, numwords);
+    unsigned long long *branch_vv_bitset = malloc(numwords * sizeof *branch_vv_bitset);
+    unsigned long long *bvvb = malloc(numwords * sizeof *branch_vv_bitset);
 
-    if (0 != bitset_popcount(branch_vv_bitset, numwords)) {
+    int top = 50;
+    bool can_backtrack = false;
+    for (int i=0; i<top; i++) {
+        for (int i=0; i<numwords; i++)
+            bvvb[i] = 0;
+        colouring_bound(g, P_bitset, bvvb, target, numwords);
+        if (0 == bitset_popcount(bvvb, numwords)) {
+            can_backtrack = true;
+            break;
+        }
+        if (i == 0 || bitset_popcount(bvvb, numwords) < bitset_popcount(branch_vv_bitset, numwords)) {
+            copy_bitset(bvvb, branch_vv_bitset, numwords);
+            top = bitset_popcount(bvvb, numwords) * 2;
+        }
+    }
+
+    if (!can_backtrack) {
         bitset_intersect_with_complement(P_bitset, branch_vv_bitset, numwords);
 
         unsigned long long *new_P_bitset = malloc(numwords * sizeof *new_P_bitset);
@@ -124,12 +165,15 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         free(new_P_bitset);
     }
 
+    free(bvvb);
     free(branch_vv_bitset);
 }
 
 void mc(struct Graph* g, long *expand_call_count,
         bool quiet, int vtx_ordering, struct VtxList *incumbent)
 {
+    srand(time(NULL));
+
     calculate_all_degrees(g);
 
     int *vv = malloc(g->n * sizeof *vv);

@@ -4,7 +4,7 @@ SHARED_C = graph.c c_program_timing.c vertex_ordering.c util.c bitset.c
 all: colour_order
 
 colour_order: colour_order.c colour_order_solver.c colour_order_solver.h $(SHARED_C) $(HEADERS)
-	gcc -O3 -march=native -Wall -std=c11 -o colour_order colour_order.c colour_order_solver.c $(SHARED_C)
+	gcc -O3 -march=native -Wall -std=c11 -o colour_order colour_order.c colour_order_solver.c $(SHARED_C) -lm
 
 clean:
 	rm colour_order
