@@ -35,9 +35,9 @@ void colouring_bound(struct Graph *g,
     for (int i=0; i<g->n; i++)
         residual_wt[i] = g->weight[i];
 
-    int k = 14;
-    int K = 14;
-    int v_options[14];
+    int k = 20;
+    int K = 20;
+    int v_options[20];
 
     int pc = bitset_popcount(to_colour, numwords);
 
@@ -153,7 +153,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
             if (C->size != 0)
-                top = pc * 2;
+                top = pc;
         }
     }
 
