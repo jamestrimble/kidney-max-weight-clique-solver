@@ -43,6 +43,11 @@ struct Weight default_weight()
     return (struct Weight) {1};
 }
 
+void print_weight(struct Weight const wt)
+{
+    printf("%ld", wt.weight);
+}
+
 void add_edge(struct Graph *g, int v, int w) {
     g->adjmat[v][w] = true;
     g->adjmat[w][v] = true;

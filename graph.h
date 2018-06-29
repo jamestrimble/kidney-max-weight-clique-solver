@@ -26,6 +26,8 @@ struct Weight weight_difference(struct Weight const wt0, struct Weight const wt1
 
 struct Weight default_weight();
 
+void print_weight(struct Weight const wt);
+
 struct Graph {
     int n;
     int *degree;
