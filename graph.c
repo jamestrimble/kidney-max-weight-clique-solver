@@ -42,16 +42,14 @@ bool weight_eq(struct Weight const wt0, struct Weight const wt1)
     return true;
 }
 
-bool weight_gt_zero(struct Weight const wt0)
+bool weight_eq_zero(struct Weight const wt0)
 {
     for (int i=0; i<WEIGHT_SIZE; i++) {
-        if (wt0.weight[i] > 0) {
-            return true;
-        } else if (wt0.weight[i] < 0) {
+        if (wt0.weight[i] != 0) {
             return false;
         }
     }
-    return false;
+    return true;
 }
 
 struct Weight weight_sum(struct Weight const wt0, struct Weight const wt1)

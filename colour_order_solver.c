@@ -36,25 +36,41 @@ void colouring_bound(struct Graph *g,
     while ((v=first_set_bit(to_colour, numwords))!=-1) {
         copy_bitset(to_colour, candidates, numwords);
         struct Weight class_min_wt = residual_wt[v];
-        unset_bit(to_colour, v);
+        struct Weight class_max_wt = residual_wt[v];
+//        unset_bit(to_colour, v);
         int col_class_size = 1;
         col_class[0] = v;
         bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
         while ((v=first_set_bit(candidates, numwords))!=-1) {
             if (weight_lt(residual_wt[v], class_min_wt))
                 class_min_wt = residual_wt[v];
-            unset_bit(to_colour, v);
+            if (weight_gt(residual_wt[v], class_max_wt))
+                class_max_wt = residual_wt[v];
+//            unset_bit(to_colour, v);
             col_class[col_class_size++] = v;
             bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
         }
-        bound = weight_sum(bound, class_min_wt);
-        for (int i=0; i<col_class_size; i++) {
-            int w = col_class[i];
-            residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
-            if (weight_gt_zero(residual_wt[w])) {
-                set_bit(to_colour, w);
-            } else if (weight_gt(bound, target)) {
-                set_bit(branch_vv_bitset, w);
+        if (!weight_gt(weight_sum(bound, class_max_wt), target)) {
+            bound = weight_sum(bound, class_min_wt);
+            for (int i=0; i<col_class_size; i++) {
+                int w = col_class[i];
+                residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
+                if (weight_eq_zero(residual_wt[w])) {
+                    unset_bit(to_colour, w);
+                }
+            }
+        } else {
+            for (int i=0; i<numwords; i++) {
+                unsigned long long word = to_colour[i];
+                while (word) {
+                    int bit = __builtin_ctzll(word);
+                    word ^= (1ull << bit);
+                    int v = i * BITS_PER_WORD + bit;
+                    if (weight_gt(weight_sum(bound, residual_wt[v]), target)) {
+                        set_bit(branch_vv_bitset, v);
+                        unset_bit(to_colour, v);
+                    }
+                }
             }
         }
     }

@@ -20,7 +20,7 @@ bool weight_gt(struct Weight const wt0, struct Weight const wt1);
 
 bool weight_eq(struct Weight const wt0, struct Weight const wt1);
 
-bool weight_gt_zero(struct Weight const wt0);
+bool weight_eq_zero(struct Weight const wt0);
 
 struct Weight weight_sum(struct Weight const wt0, struct Weight const wt1);
 
