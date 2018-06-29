@@ -39,8 +39,9 @@ void colouring_bound(struct Graph *g,
     int K = 14;
     int v_options[14];
 
+    int pc = bitset_popcount(to_colour, numwords);
+
     while ((v=first_set_bit(to_colour, numwords))!=-1) {
-        int pc = bitset_popcount(to_colour, numwords);
         if (pc >= K) {
             for (int i=0; i<k; i++) {
                 int w = first_set_bit(to_colour, numwords);
@@ -83,6 +84,7 @@ void colouring_bound(struct Graph *g,
                 residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
                 if (weight_eq_zero(residual_wt[w])) {
                     unset_bit(to_colour, w);
+                    --pc;
                 }
             }
         } else {
@@ -95,6 +97,7 @@ void colouring_bound(struct Graph *g,
                     if (weight_gt(weight_sum(bound, residual_wt[v]), target)) {
                         set_bit(branch_vv_bitset, v);
                         unset_bit(to_colour, v);
+                        --pc;
                     }
                 }
             }
