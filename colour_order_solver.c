@@ -41,7 +41,7 @@ void colouring_bound(struct Graph *g,
 
     int pc = bitset_popcount(to_colour, numwords);
 
-    while ((v=first_set_bit(to_colour, numwords))!=-1) {
+    while (0 != pc) {
         if (pc >= K) {
             for (int i=0; i<k; i++) {
                 int w = first_set_bit(to_colour, numwords);
@@ -60,6 +60,8 @@ void colouring_bound(struct Graph *g,
                 rand_num = 0;
 //            printf("%ld\n", rand_num);
             v = v_options[rand_num];
+        } else {
+            v=first_set_bit(to_colour, numwords);
         }
         copy_bitset(to_colour, candidates, numwords);
         struct Weight class_min_wt = residual_wt[v];
@@ -69,10 +71,11 @@ void colouring_bound(struct Graph *g,
         col_class[0] = v;
         bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
         while ((v=first_set_bit(candidates, numwords))!=-1) {
-            if (weight_lt(residual_wt[v], class_min_wt))
+            if (weight_lt(residual_wt[v], class_min_wt)) {
                 class_min_wt = residual_wt[v];
-            if (weight_gt(residual_wt[v], class_max_wt))
+            } else if (weight_gt(residual_wt[v], class_max_wt)) {
                 class_max_wt = residual_wt[v];
+            }
 //            unset_bit(to_colour, v);
             col_class[col_class_size++] = v;
             bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
@@ -88,13 +91,14 @@ void colouring_bound(struct Graph *g,
                 }
             }
         } else {
+            struct Weight target_minus_bound = weight_difference(target, bound);
             for (int i=0; i<numwords; i++) {
                 unsigned long long word = to_colour[i];
                 while (word) {
                     int bit = __builtin_ctzll(word);
                     word ^= (1ull << bit);
                     int v = i * BITS_PER_WORD + bit;
-                    if (weight_gt(weight_sum(bound, residual_wt[v]), target)) {
+                    if (weight_gt(residual_wt[v], target_minus_bound)) {
                         set_bit(branch_vv_bitset, v);
                         unset_bit(to_colour, v);
                         --pc;
