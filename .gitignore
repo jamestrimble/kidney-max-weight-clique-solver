@@ -1,7 +1,1 @@
-colour_order
-*.o
-*.swp
-*.log
-*.wclq
-*.json
-*.wclq.gz
+*.bak
