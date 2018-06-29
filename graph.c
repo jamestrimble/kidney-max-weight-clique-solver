@@ -178,6 +178,10 @@ struct Graph *readGraph(char* filename) {
 
     struct Graph *g = NULL;
 
+    struct Weight weight;
+    int offset;
+    int read_char_count;
+
     while (getline(&line, &nchar, f) != -1) {
         if (nchar > 0) {
             switch (line[0]) {
@@ -197,9 +201,16 @@ struct Graph *readGraph(char* filename) {
                 edges_read++;
                 break;
             case 'n':
-                if (sscanf(line, "n %d %ld", &v, &wt)!=2)
+                if (sscanf(line, "n %d%n", &v, &read_char_count)!=1)
                     fail("Error reading a line beginning with n.\n");
-                g->weight[v-1] = (struct Weight) {{0, 0, 0, 0, wt}};
+                offset = read_char_count;
+                for (int i=0; i<WEIGHT_SIZE; i++) {
+                    if (sscanf(line + offset, "%ld%n", &wt, &read_char_count)!=1)
+                        fail("Error reading a line beginning with n.\n");
+                    offset += read_char_count;
+                    weight.weight[i] = wt;
+                }
+                g->weight[v-1] = weight;
                 break;
             }
         }
