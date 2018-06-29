@@ -7,9 +7,11 @@
 #define BYTES_PER_WORD sizeof(unsigned long long)
 #define BITS_PER_WORD (CHAR_BIT * BYTES_PER_WORD)
 
+#define WEIGHT_SIZE 5
+
 struct Weight
 {
-    long weight;
+    long weight[WEIGHT_SIZE];
 };
 
 bool weight_lt(struct Weight const wt0, struct Weight const wt1);

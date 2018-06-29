@@ -10,42 +10,79 @@
 
 bool weight_lt(struct Weight const wt0, struct Weight const wt1)
 {
-    return wt0.weight < wt1.weight;
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        if (wt0.weight[i] < wt1.weight[i]) {
+            return true;
+        } else if (wt0.weight[i] > wt1.weight[i]) {
+            return false;
+        }
+    }
+    return false;
 }
 
 bool weight_gt(struct Weight const wt0, struct Weight const wt1)
 {
-    return wt0.weight > wt1.weight;
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        if (wt0.weight[i] > wt1.weight[i]) {
+            return true;
+        } else if (wt0.weight[i] < wt1.weight[i]) {
+            return false;
+        }
+    }
+    return false;
 }
 
 bool weight_eq(struct Weight const wt0, struct Weight const wt1)
 {
-    return wt0.weight == wt1.weight;
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        if (wt0.weight[i] != wt1.weight[i]) {
+            return false;
+        }
+    }
+    return true;
 }
 
 bool weight_gt_zero(struct Weight const wt0)
 {
-    return wt0.weight > 0;
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        if (wt0.weight[i] > 0) {
+            return true;
+        } else if (wt0.weight[i] < 0) {
+            return false;
+        }
+    }
+    return false;
 }
 
 struct Weight weight_sum(struct Weight const wt0, struct Weight const wt1)
 {
-    return (struct Weight) {wt0.weight + wt1.weight};
+    struct Weight result;
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        result.weight[i] = wt0.weight[i] + wt1.weight[i];
+    }
+    return result;
 }
 
 struct Weight weight_difference(struct Weight const wt0, struct Weight const wt1)
 {
-    return (struct Weight) {wt0.weight - wt1.weight};
+    struct Weight result;
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        result.weight[i] = wt0.weight[i] - wt1.weight[i];
+    }
+    return result;
 }
 
 struct Weight default_weight()
 {
-    return (struct Weight) {1};
+    return (struct Weight) {{0, 0, 0, 0, 1}};
 }
 
 void print_weight(struct Weight const wt)
 {
-    printf("%ld", wt.weight);
+    printf("%ld", wt.weight[0]);
+    for (int i=1; i<WEIGHT_SIZE; i++) {
+        printf(",%ld", wt.weight[i]);
+    }
 }
 
 void add_edge(struct Graph *g, int v, int w) {
@@ -162,7 +199,7 @@ struct Graph *readGraph(char* filename) {
             case 'n':
                 if (sscanf(line, "n %d %ld", &v, &wt)!=2)
                     fail("Error reading a line beginning with n.\n");
-                g->weight[v-1] = (struct Weight) {wt};
+                g->weight[v-1] = (struct Weight) {{0, 0, 0, 0, wt}};
                 break;
             }
         }
