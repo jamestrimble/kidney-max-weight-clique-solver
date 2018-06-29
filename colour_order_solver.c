@@ -139,17 +139,21 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
     int top = 1;
     bool can_backtrack = false;
     for (int i=0; i<top; i++) {
-        for (int i=0; i<numwords; i++)
-            bvvb[i] = 0;
+        for (int j=0; j<numwords; j++)
+            bvvb[j] = 0;
         colouring_bound(g, P_bitset, bvvb, target, numwords);
-        if (0 == bitset_popcount(bvvb, numwords)) {
+        int pc = bitset_popcount(bvvb, numwords);
+        if (0 == pc) {
             can_backtrack = true;
             break;
+        } else if (1 == pc) {
+            copy_bitset(bvvb, branch_vv_bitset, numwords);
+            break;
         }
-        if (i == 0 || bitset_popcount(bvvb, numwords) < bitset_popcount(branch_vv_bitset, numwords)) {
+        if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
             if (C->size != 0)
-                top = bitset_popcount(bvvb, numwords) * 2;
+                top = pc * 2;
         }
     }
 
