@@ -221,16 +221,18 @@ void mc(struct Graph* g, long *expand_call_count, long *colouring_count,
 
     int numwords = (ordered_graph->n + BITS_PER_WORD - 1) / BITS_PER_WORD;
 
-    long *tie_breakers = malloc(ordered_graph->n * sizeof *tie_breakers);
+    struct Weight *saved_weights = malloc(ordered_graph->n * sizeof *saved_weights);
     for (int i=0; i<ordered_graph->n; i++) {
-        tie_breakers[i] = ordered_graph->weight[i].weight[WEIGHT_SIZE - 1];
-        ordered_graph->weight[i].weight[WEIGHT_SIZE - 1] = 0;
+        saved_weights[i] = ordered_graph->weight[i];
+        for (int j=1; j<WEIGHT_SIZE; j++) {
+            ordered_graph->weight[i].weight[j] = 0;
+        }
     }
 
-    for (int i=0; i<2; i++) {
-        if (i == 1) {
-            for (int i=0; i<ordered_graph->n; i++) {
-                ordered_graph->weight[i].weight[WEIGHT_SIZE - 1] = tie_breakers[i];
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        if (i != 0) {
+            for (int j=0; j<ordered_graph->n; j++) {
+                ordered_graph->weight[j].weight[i] = saved_weights[j].weight[i];
             }
         }
         unsigned long long *P_bitset = calloc(numwords, sizeof *P_bitset);
