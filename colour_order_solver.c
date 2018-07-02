@@ -31,6 +31,27 @@ void make_randoms()
     }
 }
 
+int kth_set_bit(int k, unsigned long long const * const bitset, int numwords)
+{
+    int num_bits_seen = 0;
+    for (int word_index = 0; word_index < numwords; ++word_index) {
+        unsigned long long word = bitset[word_index];
+        int popcount = __builtin_popcountll(word);
+        if (num_bits_seen + popcount >= k) {
+            for (;;) {
+                int bit = __builtin_ctzll(word);
+                ++num_bits_seen;
+                if (num_bits_seen == k) {
+                    return word_index * BITS_PER_WORD + bit;
+                }
+                word ^= (1ull << bit);
+            }
+        }
+        num_bits_seen += popcount;
+    }
+    return -1;
+}
+
 void colouring_bound(struct Graph *g,
         unsigned long long * P_bitset,
         unsigned long long * branch_vv_bitset,
@@ -50,36 +71,16 @@ void colouring_bound(struct Graph *g,
     for (int i=0; i<g->n; i++)
         residual_wt[i] = g->weight[i];
 
-    int k = NUM_RANDOM_VALUES;
-    int K = NUM_RANDOM_VALUES;
-    int v_options[NUM_RANDOM_VALUES];
-
     int pc = bitset_popcount(to_colour, numwords);
 
     int rand_index = rand() % NUM_RANDOMS;
     int rand_step = 1 + (rand() % (NUM_RANDOMS - 1));
 
     while (0 != pc) {
-        if (pc >= K) {
-            for (int i=0; i<k; i++) {
-                int w = first_set_bit(to_colour, numwords);
-                v_options[i] = w;
-                unset_bit(to_colour, w);
-            }
-            for (int i=0; i<k; i++) {
-                int w = v_options[i];
-                set_bit(to_colour, w);
-            }
+        if (pc >= NUM_RANDOM_VALUES) {
             int rand_num = randoms[rand_index];
             rand_index = (rand_index + rand_step) % NUM_RANDOMS;
-//            double rnd = (double)rand() / ((double)RAND_MAX+1);
-//            if (rnd == 0)
-//                rnd = 0.00000001;
-//            long rand_num = (long)k - 1 - (unsigned)(-6 * log(rnd));
-//            if (rand_num < 0)
-//                rand_num = 0;
-//            printf("%ld\n", rand_num);
-            v = v_options[rand_num];
+            v = kth_set_bit(rand_num + 1, to_colour, numwords);
         } else {
             v=first_set_bit(to_colour, numwords);
         }
