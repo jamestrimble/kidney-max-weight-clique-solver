@@ -24,10 +24,10 @@ int randoms[NUM_RANDOMS];
 void make_randoms()
 {
     for (int i=0; i<NUM_RANDOMS; i++) {
-//        int val = NUM_RANDOM_VALUES - 1;
-//        while (rand() > RAND_MAX * 0.2 && val > 0)
-//            --val;
-        int val = rand() % NUM_RANDOM_VALUES;
+        int val = NUM_RANDOM_VALUES - 1;
+        while (rand() > RAND_MAX * 0.2 && val > 0)
+            --val;
+//        int val = rand() % NUM_RANDOM_VALUES;
         randoms[i] = val;
     }
 }
