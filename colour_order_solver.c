@@ -136,7 +136,9 @@ void colouring_bound(struct Graph *g,
 }
 
 void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
-        struct VtxList *incumbent, int level, long *expand_call_count,
+        struct VtxList *incumbent, int level,
+        long *expand_call_count,
+        long *colouring_count,
         bool quiet, int numwords)
 {
     (*expand_call_count)++;
@@ -163,6 +165,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         for (int j=0; j<numwords; j++)
             bvvb[j] = 0;
         colouring_bound(g, P_bitset, bvvb, target, numwords);
+        ++(*colouring_count);
         int pc = bitset_popcount(bvvb, numwords);
         if (0 == pc) {
             can_backtrack = true;
@@ -191,7 +194,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
             bitset_intersect_with_complement(new_P_bitset, g->bit_complement_nd[v], numwords);
 
             vtxlist_push_vtx(g, C, v);
-            expand(g, C, new_P_bitset, incumbent, level+1, expand_call_count, quiet, numwords);
+            expand(g, C, new_P_bitset, incumbent, level+1, expand_call_count, colouring_count, quiet, numwords);
             set_bit(P_bitset, v);
             vtxlist_pop_vtx(g, C);
         }
@@ -202,7 +205,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
     free(branch_vv_bitset);
 }
 
-void mc(struct Graph* g, long *expand_call_count,
+void mc(struct Graph* g, long *expand_call_count, long *colouring_count,
         bool quiet, int vtx_ordering, struct VtxList *incumbent)
 {
 //    srand(time(NULL));
@@ -224,7 +227,7 @@ void mc(struct Graph* g, long *expand_call_count,
 
     struct VtxList C;
     init_VtxList(&C, ordered_graph->n);
-    expand(ordered_graph, &C, P_bitset, incumbent, 0, expand_call_count, quiet, numwords);
+    expand(ordered_graph, &C, P_bitset, incumbent, 0, expand_call_count, colouring_count, quiet, numwords);
     destroy_VtxList(&C);
     free(P_bitset);
 

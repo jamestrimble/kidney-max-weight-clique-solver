@@ -77,9 +77,10 @@ int main(int argc, char** argv) {
     set_start_time();
     set_time_limit_sec(arguments.time_limit);
     long expand_call_count = 0;
+    long colouring_count = 0;
     struct VtxList clq;
     init_VtxList(&clq, g->n);
-    mc(g, &expand_call_count, arguments.quiet, arguments.vtx_ordering, &clq);
+    mc(g, &expand_call_count, &colouring_count, arguments.quiet, arguments.vtx_ordering, &clq);
     long elapsed_msec = get_elapsed_time_msec();
     if (is_timeout_flag_set()) {
         printf("TIMEOUT\n");
@@ -93,6 +94,7 @@ int main(int argc, char** argv) {
     print_weight(clq.total_wt);
     printf("\n");
     printf("Calls to expand():          %ld\n", expand_call_count);
+    printf("Colourings:                 %ld\n", colouring_count);
     printf("Time:                       %ld\n", elapsed_msec);
 
     for (int i=0; i<clq.size; i++)
