@@ -16,21 +16,18 @@
 #include <string.h>
 #include <time.h>
 
-#define NUM_RANDOMS 3499
+#define NUM_RANDOMS 9973
+#define NUM_RANDOM_VALUES 20
 
 int randoms[NUM_RANDOMS];
 
 void make_randoms()
 {
-    int k = 20;
     for (int i=0; i<NUM_RANDOMS; i++) {
-        double rnd = (double)rand() / ((double)RAND_MAX+1);
-        if (rnd == 0)
-            rnd = 0.00000001;
-        long rand_num = (long)k - 1 - (unsigned)(-6 * log(rnd));
-        if (rand_num < 0)
-            rand_num = 0;
-        randoms[i] = rand_num;
+        int val = NUM_RANDOM_VALUES - 1;
+        while (rand() > RAND_MAX * 0.2 && val > 0)
+            --val;
+        randoms[i] = val;
     }
 }
 
@@ -53,9 +50,9 @@ void colouring_bound(struct Graph *g,
     for (int i=0; i<g->n; i++)
         residual_wt[i] = g->weight[i];
 
-    int k = 20;
-    int K = 20;
-    int v_options[20];
+    int k = NUM_RANDOM_VALUES;
+    int K = NUM_RANDOM_VALUES;
+    int v_options[NUM_RANDOM_VALUES];
 
     int pc = bitset_popcount(to_colour, numwords);
 
@@ -176,7 +173,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
             if (C->size != 0)
-                top = pc /* * 2*/;
+                top = pc;
         }
     }
 
