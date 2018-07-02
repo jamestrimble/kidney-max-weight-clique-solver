@@ -3,6 +3,11 @@
 
 #include "graph.h" 
 
+bool test_bit(unsigned long long *bitset, int bit)
+{
+    return 0 != (bitset[bit/BITS_PER_WORD] & (1ull << (bit%BITS_PER_WORD)));
+}
+
 void set_bit(unsigned long long *bitset, int bit)
 {
     bitset[bit/BITS_PER_WORD] |= (1ull << (bit%BITS_PER_WORD));

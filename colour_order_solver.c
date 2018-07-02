@@ -63,6 +63,7 @@ void colouring_bound(struct Graph *g,
 
     copy_bitset(P_bitset, to_colour, numwords);
 
+    int u = -1;
     int v;
     struct Weight bound = {};
 
@@ -77,27 +78,27 @@ void colouring_bound(struct Graph *g,
     int rand_step = 1 + (rand() % (NUM_RANDOMS - 1));
 
     while (0 != pc) {
-        if (pc >= NUM_RANDOM_VALUES) {
-            int rand_num = randoms[rand_index];
-            rand_index = (rand_index + rand_step) % NUM_RANDOMS;
-            v = kth_set_bit(rand_num + 1, to_colour, numwords);
-        } else {
-            v=first_set_bit(to_colour, numwords);
+        if (u == -1 || !test_bit(to_colour, u)) {
+            if (pc >= NUM_RANDOM_VALUES) {
+                int rand_num = randoms[rand_index];
+                rand_index = (rand_index + rand_step) % NUM_RANDOMS;
+                u = kth_set_bit(rand_num + 1, to_colour, numwords);
+            } else {
+                u=first_set_bit(to_colour, numwords);
+            }
         }
         copy_bitset(to_colour, candidates, numwords);
-        struct Weight class_min_wt = residual_wt[v];
-        struct Weight class_max_wt = residual_wt[v];
-//        unset_bit(to_colour, v);
+        struct Weight class_min_wt = residual_wt[u];
+        struct Weight class_max_wt = residual_wt[u];
         int col_class_size = 1;
-        col_class[0] = v;
-        bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
+        col_class[0] = u;
+        bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
         while ((v=first_set_bit(candidates, numwords))!=-1) {
             if (weight_lt(residual_wt[v], class_min_wt)) {
                 class_min_wt = residual_wt[v];
             } else if (weight_gt(residual_wt[v], class_max_wt)) {
                 class_max_wt = residual_wt[v];
             }
-//            unset_bit(to_colour, v);
             col_class[col_class_size++] = v;
             bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
         }
@@ -175,8 +176,6 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
             copy_bitset(bvvb, branch_vv_bitset, numwords);
             if (!weight_eq_zero(incumbent->total_wt)) {
                 top = pc;
-                if (top < 2)
-                    top = 2;
             }
         }
     }

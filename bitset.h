@@ -1,6 +1,8 @@
 #ifndef BITSET_H
 #define BITSET_H
 
+bool test_bit(unsigned long long *bitset, int bit);
+
 void set_bit(unsigned long long *bitset, int bit);
 
 void unset_bit(unsigned long long *bitset, int bit);
