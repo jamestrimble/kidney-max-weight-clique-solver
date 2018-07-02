@@ -170,14 +170,14 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         if (0 == pc) {
             can_backtrack = true;
             break;
-        } else if (1 == pc) {
-            copy_bitset(bvvb, branch_vv_bitset, numwords);
-            break;
         }
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
-            if (!weight_eq_zero(incumbent->total_wt))
+            if (!weight_eq_zero(incumbent->total_wt)) {
                 top = pc;
+                if (top < 2)
+                    top = 2;
+            }
         }
     }
 
