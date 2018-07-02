@@ -8,68 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-bool weight_lt(struct Weight const wt0, struct Weight const wt1)
-{
-    for (int i=0; i<WEIGHT_SIZE; i++) {
-        if (wt0.weight[i] < wt1.weight[i]) {
-            return true;
-        } else if (wt0.weight[i] > wt1.weight[i]) {
-            return false;
-        }
-    }
-    return false;
-}
-
-bool weight_gt(struct Weight const wt0, struct Weight const wt1)
-{
-    for (int i=0; i<WEIGHT_SIZE; i++) {
-        if (wt0.weight[i] > wt1.weight[i]) {
-            return true;
-        } else if (wt0.weight[i] < wt1.weight[i]) {
-            return false;
-        }
-    }
-    return false;
-}
-
-bool weight_eq(struct Weight const wt0, struct Weight const wt1)
-{
-    for (int i=WEIGHT_SIZE; i--; ) {
-        if (wt0.weight[i] != wt1.weight[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool weight_eq_zero(struct Weight const wt0)
-{
-    for (int i=WEIGHT_SIZE; i--; ) {
-        if (wt0.weight[i] != 0) {
-            return false;
-        }
-    }
-    return true;
-}
-
-struct Weight weight_sum(struct Weight const wt0, struct Weight const wt1)
-{
-    struct Weight result;
-    for (int i=0; i<WEIGHT_SIZE; i++) {
-        result.weight[i] = wt0.weight[i] + wt1.weight[i];
-    }
-    return result;
-}
-
-struct Weight weight_difference(struct Weight const wt0, struct Weight const wt1)
-{
-    struct Weight result;
-    for (int i=0; i<WEIGHT_SIZE; i++) {
-        result.weight[i] = wt0.weight[i] - wt1.weight[i];
-    }
-    return result;
-}
-
 struct Weight default_weight()
 {
     return (struct Weight) {{0, 0, 0, 0, 1}};
