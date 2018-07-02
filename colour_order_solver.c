@@ -24,9 +24,10 @@ int randoms[NUM_RANDOMS];
 void make_randoms()
 {
     for (int i=0; i<NUM_RANDOMS; i++) {
-        int val = NUM_RANDOM_VALUES - 1;
-        while (rand() > RAND_MAX * 0.2 && val > 0)
-            --val;
+//        int val = NUM_RANDOM_VALUES - 1;
+//        while (rand() > RAND_MAX * 0.2 && val > 0)
+//            --val;
+        int val = rand() % NUM_RANDOM_VALUES;
         randoms[i] = val;
     }
 }
@@ -175,7 +176,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
             if (!weight_eq_zero(incumbent->total_wt)) {
-                top = pc;
+                top = pc * 2;
             }
         }
     }
