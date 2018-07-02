@@ -16,6 +16,24 @@
 #include <string.h>
 #include <time.h>
 
+#define NUM_RANDOMS 3499
+
+int randoms[NUM_RANDOMS];
+
+void make_randoms()
+{
+    int k = 20;
+    for (int i=0; i<NUM_RANDOMS; i++) {
+        double rnd = (double)rand() / ((double)RAND_MAX+1);
+        if (rnd == 0)
+            rnd = 0.00000001;
+        long rand_num = (long)k - 1 - (unsigned)(-6 * log(rnd));
+        if (rand_num < 0)
+            rand_num = 0;
+        randoms[i] = rand_num;
+    }
+}
+
 void colouring_bound(struct Graph *g,
         unsigned long long * P_bitset,
         unsigned long long * branch_vv_bitset,
@@ -41,6 +59,9 @@ void colouring_bound(struct Graph *g,
 
     int pc = bitset_popcount(to_colour, numwords);
 
+    int rand_index = rand() % NUM_RANDOMS;
+    int rand_step = 1 + (rand() % (NUM_RANDOMS - 1));
+
     while (0 != pc) {
         if (pc >= K) {
             for (int i=0; i<k; i++) {
@@ -52,12 +73,14 @@ void colouring_bound(struct Graph *g,
                 int w = v_options[i];
                 set_bit(to_colour, w);
             }
-            double rnd = (double)rand() / ((double)RAND_MAX+1);
-            if (rnd == 0)
-                rnd = 0.00000001;
-            long rand_num = (long)k - 1 - (unsigned)(-6 * log(rnd));
-            if (rand_num < 0)
-                rand_num = 0;
+            int rand_num = randoms[rand_index];
+            rand_index = (rand_index + rand_step) % NUM_RANDOMS;
+//            double rnd = (double)rand() / ((double)RAND_MAX+1);
+//            if (rnd == 0)
+//                rnd = 0.00000001;
+//            long rand_num = (long)k - 1 - (unsigned)(-6 * log(rnd));
+//            if (rand_num < 0)
+//                rand_num = 0;
 //            printf("%ld\n", rand_num);
             v = v_options[rand_num];
         } else {
@@ -153,7 +176,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
             if (C->size != 0)
-                top = pc * 20;
+                top = pc /* * 2*/;
         }
     }
 
@@ -184,7 +207,8 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
 void mc(struct Graph* g, long *expand_call_count,
         bool quiet, int vtx_ordering, struct VtxList *incumbent)
 {
-    srand(time(NULL));
+//    srand(time(NULL));
+    make_randoms();
 
     calculate_all_degrees(g);
 
