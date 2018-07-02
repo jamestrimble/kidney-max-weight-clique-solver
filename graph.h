@@ -17,10 +17,8 @@ struct Weight
 static bool weight_lt(struct Weight const wt0, struct Weight const wt1)
 {
     for (int i=0; i<WEIGHT_SIZE; i++) {
-        if (wt0.weight[i] < wt1.weight[i]) {
-            return true;
-        } else if (wt0.weight[i] > wt1.weight[i]) {
-            return false;
+        if (wt0.weight[i] != wt1.weight[i]) {
+            return wt0.weight[i] < wt1.weight[i];
         }
     }
     return false;
@@ -29,10 +27,8 @@ static bool weight_lt(struct Weight const wt0, struct Weight const wt1)
 static bool weight_gt(struct Weight const wt0, struct Weight const wt1)
 {
     for (int i=0; i<WEIGHT_SIZE; i++) {
-        if (wt0.weight[i] > wt1.weight[i]) {
-            return true;
-        } else if (wt0.weight[i] < wt1.weight[i]) {
-            return false;
+        if (wt0.weight[i] != wt1.weight[i]) {
+            return wt0.weight[i] > wt1.weight[i];
         }
     }
     return false;

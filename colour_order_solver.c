@@ -97,7 +97,8 @@ void colouring_bound(struct Graph *g,
         while ((v=first_set_bit(candidates, numwords))!=-1) {
             if (weight_lt(residual_wt[v], class_min_wt)) {
                 class_min_wt = residual_wt[v];
-            } else if (weight_gt(residual_wt[v], class_max_wt)) {
+            }
+            if (weight_gt(residual_wt[v], class_max_wt)) {
                 class_max_wt = residual_wt[v];
             }
             col_class[col_class_size++] = v;
