@@ -176,7 +176,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         }
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
-            if (C->size != 0)
+            if (!weight_eq_zero(incumbent->total_wt))
                 top = pc;
         }
     }
@@ -221,15 +221,28 @@ void mc(struct Graph* g, long *expand_call_count, long *colouring_count,
 
     int numwords = (ordered_graph->n + BITS_PER_WORD - 1) / BITS_PER_WORD;
 
-    unsigned long long *P_bitset = calloc(numwords, sizeof *P_bitset);
-    for (int v=0; v<ordered_graph->n; v++)
-        set_bit(P_bitset, v);
+    long *tie_breakers = malloc(ordered_graph->n * sizeof *tie_breakers);
+    for (int i=0; i<ordered_graph->n; i++) {
+        tie_breakers[i] = ordered_graph->weight[i].weight[WEIGHT_SIZE - 1];
+        ordered_graph->weight[i].weight[WEIGHT_SIZE - 1] = 0;
+    }
 
-    struct VtxList C;
-    init_VtxList(&C, ordered_graph->n);
-    expand(ordered_graph, &C, P_bitset, incumbent, 0, expand_call_count, colouring_count, quiet, numwords);
-    destroy_VtxList(&C);
-    free(P_bitset);
+    for (int i=0; i<2; i++) {
+        if (i == 1) {
+            for (int i=0; i<ordered_graph->n; i++) {
+                ordered_graph->weight[i].weight[WEIGHT_SIZE - 1] = tie_breakers[i];
+            }
+        }
+        unsigned long long *P_bitset = calloc(numwords, sizeof *P_bitset);
+        for (int v=0; v<ordered_graph->n; v++)
+            set_bit(P_bitset, v);
+
+        struct VtxList C;
+        init_VtxList(&C, ordered_graph->n);
+        expand(ordered_graph, &C, P_bitset, incumbent, 0, expand_call_count, colouring_count, quiet, numwords);
+        destroy_VtxList(&C);
+        free(P_bitset);
+    }
 
     // Use vertex indices from original graph
     for (int i=0; i<incumbent->size; i++)
