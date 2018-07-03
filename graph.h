@@ -87,6 +87,8 @@ struct Graph {
     int n;
     int *degree;
     struct Weight *weight;
+    int *donors_sz;
+    long (*donors)[3];
     bool **adjmat;
     unsigned long long **bit_complement_nd;
 };

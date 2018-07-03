@@ -66,10 +66,14 @@ class PoolOptimiser(object):
 
         descriptions = [] # A description of each node, for printing in the comments
 
+        node_to_donor_lines = []
+
         for c, node_id in zip(self.chains, chain_node_ids):
             for pd_pair in c.pd_pairs:
                 patient_to_nodes[pd_pair.patient].append(node_id)
                 paired_donor_to_node[pd_pair.donor].append(node_id)
+                node_to_donor_lines.append("d {} {}".format(node_id+1, pd_pair.donor.nhs_id))
+            node_to_donor_lines.append("d {} {}".format(node_id+1, c.altruist_edge.altruist.nhs_id))
             ndd_to_node[c.altruist_edge.altruist].append(node_id)
             hier_scores[node_id] = self.calc_hier_score(
                     c, bit_shifts, lambda oc, c: oc.chain_val(c))
@@ -82,6 +86,7 @@ class PoolOptimiser(object):
             for pd_pair in c.pd_pairs:
                 patient_to_nodes[pd_pair.patient].append(node_id)
                 paired_donor_to_node[pd_pair.donor].append(node_id)
+                node_to_donor_lines.append("d {} {}".format(node_id+1, pd_pair.donor.nhs_id))
             hier_scores[node_id] = self.calc_hier_score(
                     c, bit_shifts, lambda oc, c: oc.cycle_val(c))
             descriptions.append(" ".join("({},{})".format(
@@ -92,6 +97,7 @@ class PoolOptimiser(object):
             hier_scores[node_id] = self.calc_hier_score(
                     ndd, bit_shifts, lambda oc, ndd: oc.altruist_val(ndd))
             descriptions.append(str(ndd.nhs_id))
+            node_to_donor_lines.append("d {} {}".format(node_id+1, ndd.nhs_id))
 
         adj_mat = [[False]*num_nodes for i in range(num_nodes)]
         
@@ -128,6 +134,9 @@ class PoolOptimiser(object):
                 (num_nodes*num_nodes - num_nodes) / 2 - sum(sum(row) for row in adj_mat) / 2)
         else:
             print "p edge {} {}".format(num_nodes, sum(sum(row) for row in adj_mat) / 2)
+
+        for line in node_to_donor_lines:
+            print line
 
         for i in range(num_nodes-1):
             for j in range(i+1, num_nodes):

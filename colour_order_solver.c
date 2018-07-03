@@ -53,6 +53,32 @@ int kth_set_bit(int k, unsigned long long const * const bitset, int numwords)
     return -1;
 }
 
+bool has_donor(long *donors, int donors_sz, long donor)
+{
+    for (int i=0; i<donors_sz; i++)
+        if (donors[i] == donor)
+            return true;
+    return false;
+}
+
+bool all_have_donor(struct Graph *g, unsigned long long *candidates, long donor, int first_word, int numwords)
+{
+    for (int i=first_word; i<numwords; i++) {
+        unsigned long long word = candidates[i];
+        while (word) {
+            int bit = __builtin_ctzll(word);
+            word ^= (1ull << bit);
+            int v = i * BITS_PER_WORD + bit;
+            if (!has_donor(g->donors[v], g->donors_sz[v], donor)) {
+//                printf("false\n");
+                return false;
+            }
+        }
+    }
+//    printf("true\n");
+    return true;
+}
+
 void colouring_bound(struct Graph *g,
         unsigned long long * P_bitset,
         unsigned long long * branch_vv_bitset,
@@ -88,6 +114,12 @@ void colouring_bound(struct Graph *g,
                 u=first_set_bit(to_colour, numwords);
             }
         }
+        long remaining_donors[3];
+        int remaining_donors_sz = g->donors_sz[u];
+        for (int i=0; i<remaining_donors_sz; i++)
+            remaining_donors[i] = g->donors[u][i];
+//        printf("\n%d\n", remaining_donors_sz);
+
         copy_bitset(to_colour, candidates, numwords);
         struct Weight class_min_wt = residual_wt[u];
         struct Weight class_max_wt = residual_wt[u];
@@ -102,9 +134,39 @@ void colouring_bound(struct Graph *g,
             if (weight_gt(residual_wt[v], class_max_wt)) {
                 class_max_wt = residual_wt[v];
             }
+
             col_class[col_class_size++] = v;
             bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
+            int j = 0;
+            for (int i=0; i<remaining_donors_sz; i++) {
+                if (has_donor(g->donors[v], g->donors_sz[v], remaining_donors[i])) {
+                    remaining_donors[j++] = remaining_donors[i];
+                }
+            }
+            remaining_donors_sz = j;
+
+            if (remaining_donors_sz == 1 &&
+                    all_have_donor(g, candidates, remaining_donors[0], v/BITS_PER_WORD, numwords)) {
+                for (int i=v/BITS_PER_WORD; i<numwords; i++) {
+                    unsigned long long word = candidates[i];
+                    while (word) {
+                        int bit = __builtin_ctzll(word);
+                        word ^= (1ull << bit);
+                        int v = i * BITS_PER_WORD + bit;
+                        if (weight_lt(residual_wt[v], class_min_wt)) {
+                            class_min_wt = residual_wt[v];
+                        }
+                        if (weight_gt(residual_wt[v], class_max_wt)) {
+                            class_max_wt = residual_wt[v];
+                        }
+                        col_class[col_class_size++] = v;
+                    }
+                }
+                break;
+            }
+//            printf("%d\n", remaining_donors_sz);
         }
+
         if (!weight_gt(weight_sum(bound, class_max_wt), target)) {
             bound = weight_sum(bound, class_min_wt);
             for (int i=0; i<col_class_size; i++) {

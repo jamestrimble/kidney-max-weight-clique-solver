@@ -64,6 +64,8 @@ struct Graph *new_graph(int n)
     g->n = n;
     g->degree = calloc(n, sizeof(*g->degree));
     g->weight = calloc(n, sizeof(*g->weight));
+    g->donors = calloc(n, sizeof(*g->donors));
+    g->donors_sz = calloc(n, sizeof(*g->donors_sz));
     g->adjmat = calloc(n, sizeof(*g->adjmat));
     g->bit_complement_nd = calloc(n, sizeof(*g->bit_complement_nd));
     for (int i=0; i<n; i++) {
@@ -81,6 +83,8 @@ void free_graph(struct Graph *g)
     }
     free(g->degree);
     free(g->weight);
+    free(g->donors);
+    free(g->donors_sz);
     free(g->adjmat);
     free(g->bit_complement_nd);
     free(g);
@@ -92,8 +96,12 @@ struct Graph *induced_subgraph(struct Graph *g, int *vv, int vv_len) {
         for (int j=0; j<subg->n; j++)
             subg->adjmat[i][j] = g->adjmat[vv[i]][vv[j]];
 
-    for (int i=0; i<subg->n; i++)
+    for (int i=0; i<subg->n; i++) {
         subg->weight[i] = g->weight[vv[i]];
+        subg->donors_sz[i] = g->donors_sz[vv[i]];
+        for (int j=0; j<subg->donors_sz[i]; j++)
+            subg->donors[i][j] = g->donors[vv[i]][j];
+    }
     return subg;
 }
 
@@ -111,6 +119,8 @@ struct Graph *readGraph(char* filename) {
     int v, w;
     int edges_read = 0;
     long wt;
+
+    long donor_id;
 
     struct Graph *g = NULL;
 
@@ -135,6 +145,11 @@ struct Graph *readGraph(char* filename) {
                     fail("Error reading a line beginning with e.\n");
                 add_edge(g, v-1, w-1);
                 edges_read++;
+                break;
+            case 'd':
+                if (sscanf(line, "d %d %ld", &v, &donor_id)!=2)
+                    fail("Error reading a line beginning with d.\n");
+                g->donors[v-1][g->donors_sz[v-1]++] = donor_id;
                 break;
             case 'n':
                 if (sscanf(line, "n %d%n", &v, &read_char_count)!=1)
