@@ -1,1 +1,10 @@
 *.bak
+colour_order
+*.gcda
+*.gcno
+*.pyc
+*.gcov
+*.wclq
+*.json
+*.log
+*.out
