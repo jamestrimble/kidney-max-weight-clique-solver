@@ -108,7 +108,7 @@ void colouring_bound(struct Graph *g,
             bound = weight_sum(bound, class_min_wt);
             for (int i=0; i<col_class_size; i++) {
                 int w = col_class[i];
-                residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
+                weight_subtract(&residual_wt[w], class_min_wt);
                 if (weight_eq_zero(residual_wt[w])) {
                     unset_bit(to_colour, w);
                     --pc;
