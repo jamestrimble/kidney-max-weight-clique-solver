@@ -61,6 +61,14 @@ static void bitset_intersect_with(unsigned long long *bitset,
         bitset[i] &= adj[i];
 }
 
+static void bitset_union_with(unsigned long long *bitset1,
+                                     unsigned long long *bitset2,
+                                     int num_words)
+{
+    for (int i=0; i<num_words; i++)
+        bitset1[i] |= bitset2[i];
+}
+
 static void bitset_intersect_with_from_word(unsigned long long *bitset,
                                      unsigned long long *adj,
                                      int first_word,
@@ -76,6 +84,29 @@ static void bitset_intersect_with_complement(unsigned long long *bitset,
 {
     for (int i=0; i<num_words; i++)
         bitset[i] &= ~adj[i];
+}
+
+static bool union_is_subset_of(
+        unsigned long long *bitset1,
+        unsigned long long *bitset2,
+        unsigned long long *bitset3,
+        int num_words)
+{
+    for (int i=0; i<num_words; i++)
+        if (0 != ((bitset1[i] | bitset2[i]) & ~bitset3[i]))
+            return false;
+    return true;
+}
+
+static bool is_subset_of(
+        unsigned long long *bitset1,
+        unsigned long long *bitset2,
+        int num_words)
+{
+    for (int i=0; i<num_words; i++)
+        if (0 != (bitset1[i] & ~bitset2[i]))
+            return false;
+    return true;
 }
 
 static void copy_bitset(unsigned long long *src,

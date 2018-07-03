@@ -61,6 +61,10 @@ void colouring_bound(struct Graph *g,
 {
     unsigned long long *to_colour = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *to_colour);
     unsigned long long *candidates = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *candidates);
+    unsigned long long *col_class_bitset = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *candidates);
+    unsigned long long *prev_col_class_bitset = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *candidates);
+    for (int i=0; i<numwords; i++)
+        prev_col_class_bitset[i] = 0;
 
     copy_bitset(P_bitset, to_colour, numwords);
 
@@ -88,13 +92,17 @@ void colouring_bound(struct Graph *g,
                 u=first_set_bit(to_colour, numwords);
             }
         }
+        for (int i=0; i<numwords; i++)
+            col_class_bitset[i] = 0;
         copy_bitset(to_colour, candidates, numwords);
         struct Weight class_min_wt = residual_wt[u];
         struct Weight class_max_wt = residual_wt[u];
         int col_class_size = 1;
         col_class[0] = u;
+        set_bit(col_class_bitset, u);
         bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
         v = 0;
+
         while ((v=first_set_bit_from_word(candidates, v/BITS_PER_WORD, numwords))!=-1) {
             if (weight_lt(residual_wt[v], class_min_wt)) {
                 class_min_wt = residual_wt[v];
@@ -103,18 +111,43 @@ void colouring_bound(struct Graph *g,
                 class_max_wt = residual_wt[v];
             }
             col_class[col_class_size++] = v;
+            set_bit(col_class_bitset, v);
+
             bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
+            if (col_class_size < 10 && union_is_subset_of(col_class_bitset, candidates, prev_col_class_bitset, numwords)) {
+                bitset_union_with(col_class_bitset, candidates, numwords);
+                for (int i=v/BITS_PER_WORD; i<numwords; i++) {
+                    unsigned long long word = candidates[i];
+                    while (word) {
+                        int bit = __builtin_ctzll(word);
+                        word ^= (1ull << bit);
+                        int v = i * BITS_PER_WORD + bit;
+                        if (weight_lt(residual_wt[v], class_min_wt)) {
+                            class_min_wt = residual_wt[v];
+                        }
+                        if (weight_gt(residual_wt[v], class_max_wt)) {
+                            class_max_wt = residual_wt[v];
+                        }
+                        col_class[col_class_size++] = v;
+                    }
+                }
+                break;
+            }
         }
         if (!weight_gt(weight_sum(bound, class_max_wt), target)) {
             bound = weight_sum(bound, class_min_wt);
+            for (int i=0; i<numwords; i++)
+                prev_col_class_bitset[i] = 0;
             for (int i=0; i<col_class_size; i++) {
                 int w = col_class[i];
+                set_bit(prev_col_class_bitset, w);
                 weight_subtract(&residual_wt[w], class_min_wt);
                 if (weight_eq_zero(residual_wt[w])) {
                     unset_bit(to_colour, w);
                     --pc;
                 }
             }
+            copy_bitset(col_class_bitset, prev_col_class_bitset, numwords);
         } else {
             struct Weight target_minus_bound = weight_difference(target, bound);
             for (int i=0; i<numwords; i++) {
@@ -137,6 +170,7 @@ void colouring_bound(struct Graph *g,
 
     free(to_colour);
     free(candidates);
+    free(prev_col_class_bitset);
 }
 
 void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
