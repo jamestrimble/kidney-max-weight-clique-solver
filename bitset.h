@@ -43,11 +43,30 @@ static int first_set_bit(unsigned long long *bitset,
     return -1;
 }
 
+static int first_set_bit_from_word(unsigned long long *bitset,
+                         int first_word,
+                         int num_words)
+{
+    for (int i=first_word; i<num_words; i++)
+        if (bitset[i] != 0)
+            return i*BITS_PER_WORD + __builtin_ctzll(bitset[i]);
+    return -1;
+}
+
 static void bitset_intersect_with(unsigned long long *bitset,
                                      unsigned long long *adj,
                                      int num_words)
 {
     for (int i=0; i<num_words; i++)
+        bitset[i] &= adj[i];
+}
+
+static void bitset_intersect_with_from_word(unsigned long long *bitset,
+                                     unsigned long long *adj,
+                                     int first_word,
+                                     int num_words)
+{
+    for (int i=first_word; i<num_words; i++)
         bitset[i] &= adj[i];
 }
 

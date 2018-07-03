@@ -94,7 +94,8 @@ void colouring_bound(struct Graph *g,
         int col_class_size = 1;
         col_class[0] = u;
         bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
-        while ((v=first_set_bit(candidates, numwords))!=-1) {
+        v = 0;
+        while ((v=first_set_bit_from_word(candidates, v/BITS_PER_WORD, numwords))!=-1) {
             if (weight_lt(residual_wt[v], class_min_wt)) {
                 class_min_wt = residual_wt[v];
             }
@@ -102,7 +103,7 @@ void colouring_bound(struct Graph *g,
                 class_max_wt = residual_wt[v];
             }
             col_class[col_class_size++] = v;
-            bitset_intersect_with(candidates, g->bit_complement_nd[v], numwords);
+            bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
         }
         if (!weight_gt(weight_sum(bound, class_max_wt), target)) {
             bound = weight_sum(bound, class_min_wt);
