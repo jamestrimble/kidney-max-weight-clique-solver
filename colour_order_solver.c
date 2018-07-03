@@ -212,7 +212,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
             if (!weight_eq_zero(incumbent->total_wt)) {
-                top = pc * 2;
+                top = pc * 5;
             }
         }
     }
