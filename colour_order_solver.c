@@ -183,6 +183,7 @@ next_colour_class:
 
     free(to_colour);
     free(candidates);
+    free(col_class_bitset);
     free(prev_col_class_bitset);
 }
 
