@@ -140,7 +140,7 @@ void colouring_bound(struct Graph *g,
             set_bit(col_class_bitset, v);
 
             bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
-            if (col_class_size < 10 && union_is_subset_of(col_class_bitset, candidates, prev_col_class_bitset, numwords)) {
+            if (union_is_subset_of(col_class_bitset, candidates, prev_col_class_bitset, numwords)) {
                 bitset_union_with(col_class_bitset, candidates, numwords);
                 for (int i=v/BITS_PER_WORD; i<numwords; i++) {
                     unsigned long long word = candidates[i];
