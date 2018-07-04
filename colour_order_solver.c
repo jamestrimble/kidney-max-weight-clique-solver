@@ -16,20 +16,11 @@
 #include <string.h>
 #include <time.h>
 
-#define NUM_RANDOMS 9973
 #define NUM_RANDOM_VALUES 20
 
-int randoms[NUM_RANDOMS];
-
-void make_randoms()
+int make_rand()
 {
-    for (int i=0; i<NUM_RANDOMS; i++) {
-//        int val = NUM_RANDOM_VALUES - 1;
-//        while (rand() > RAND_MAX * 0.2 && val > 0)
-//            --val;
-        int val = rand() % NUM_RANDOM_VALUES;
-        randoms[i] = val;
-    }
+    return rand() % NUM_RANDOM_VALUES;
 }
 
 int kth_set_bit(int k, unsigned long long const * const bitset, int numwords)
@@ -98,15 +89,11 @@ void colouring_bound(struct Graph *g,
 
     int pc = bitset_popcount(to_colour, numwords);
 
-    int rand_index = rand() % NUM_RANDOMS;
-    int rand_step = 1 + (rand() % (NUM_RANDOMS - 1));
-
     while (0 != pc) {
         struct Weight max_permitted_weight = weight_difference(target, bound);
         if (u == -1 || !test_bit(to_colour, u)) {
             if (pc >= NUM_RANDOM_VALUES) {
-                int rand_num = randoms[rand_index];
-                rand_index = (rand_index + rand_step) % NUM_RANDOMS;
+                int rand_num = make_rand();
                 u = kth_set_bit(rand_num + 1, to_colour, numwords);
             } else {
                 u=first_set_bit(to_colour, numwords);
@@ -259,7 +246,6 @@ void mc(struct Graph* g, long *expand_call_count, long *colouring_count,
         bool quiet, int vtx_ordering, struct VtxList *incumbent)
 {
 //    srand(time(NULL));
-    make_randoms();
 
     calculate_all_degrees(g);
 
