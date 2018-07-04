@@ -78,10 +78,10 @@ void colouring_bound(struct Graph *g,
         struct Weight target,
         int numwords)
 {
-    unsigned long long *to_colour = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *to_colour);
-    unsigned long long *candidates = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *candidates);
-    unsigned long long *col_class_bitset = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *candidates);
-    unsigned long long *prev_col_class_bitset = malloc((g->n+BITS_PER_WORD-1)/BITS_PER_WORD * sizeof *candidates);
+    unsigned long long *to_colour = malloc(numwords * sizeof *to_colour);
+    unsigned long long *candidates = malloc(numwords * sizeof *candidates);
+    unsigned long long *col_class_bitset = malloc(numwords * sizeof *candidates);
+    unsigned long long *prev_col_class_bitset = malloc(numwords * sizeof *candidates);
     for (int i=0; i<numwords; i++)
         prev_col_class_bitset[i] = 0;
 
