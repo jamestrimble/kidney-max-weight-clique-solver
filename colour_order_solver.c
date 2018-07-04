@@ -138,11 +138,6 @@ void colouring_bound(struct Graph *g,
                         if (weight_lt(residual_wt[v], class_min_wt)) {
                             class_min_wt = residual_wt[v];
                         }
-                        if (weight_gt(residual_wt[v], max_permitted_weight)) {
-                            remove_vertices_heavier_than_max_permitted(to_colour, &pc, branch_vv_bitset,
-                                    residual_wt, max_permitted_weight, numwords);
-                            goto next_colour_class;
-                        }
                     }
                 }
                 break;
