@@ -110,15 +110,11 @@ void colouring_bound(struct Graph *g,
                     residual_wt, max_permitted_weight, numwords);
             goto next_colour_class;
         }
-        struct Weight class_min_wt = residual_wt[u];
         set_bit(col_class_bitset, u);
         bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
         v = 0;
 
         while ((v=first_set_bit_from_word(candidates, v/BITS_PER_WORD, numwords))!=-1) {
-            if (weight_lt(residual_wt[v], class_min_wt)) {
-                class_min_wt = residual_wt[v];
-            }
             if (weight_gt(residual_wt[v], max_permitted_weight)) {
                 remove_vertices_heavier_than_max_permitted(to_colour, &pc, branch_vv_bitset,
                         residual_wt, max_permitted_weight, numwords);
@@ -129,18 +125,19 @@ void colouring_bound(struct Graph *g,
             bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
             if (union_is_subset_of(col_class_bitset, candidates, prev_col_class_bitset, numwords)) {
                 bitset_union_with(col_class_bitset, candidates, numwords);
-                for (int i=v/BITS_PER_WORD; i<numwords; i++) {
-                    unsigned long long word = candidates[i];
-                    while (word) {
-                        int bit = __builtin_ctzll(word);
-                        word ^= (1ull << bit);
-                        int v = i * BITS_PER_WORD + bit;
-                        if (weight_lt(residual_wt[v], class_min_wt)) {
-                            class_min_wt = residual_wt[v];
-                        }
-                    }
-                }
                 break;
+            }
+        }
+        struct Weight class_min_wt = (struct Weight) {{LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX}};
+        for (int i=0; i<numwords; i++) {
+            unsigned long long word = col_class_bitset[i];
+            while (word) {
+                int bit = __builtin_ctzll(word);
+                word ^= (1ull << bit);
+                int w = i * BITS_PER_WORD + bit;
+                if (weight_lt(residual_wt[w], class_min_wt)) {
+                    class_min_wt = residual_wt[w];
+                }
             }
         }
         bound = weight_sum(bound, class_min_wt);
