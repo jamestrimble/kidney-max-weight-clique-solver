@@ -86,7 +86,6 @@ void colouring_bound(struct Graph *g,
     int v;
     struct Weight bound = {};
 
-    int *col_class = malloc(g->n * sizeof *col_class);
     struct Weight *residual_wt = malloc(g->n * sizeof *residual_wt);
     for (int i=0; i<g->n; i++)
         residual_wt[i] = g->weight[i];
@@ -112,8 +111,6 @@ void colouring_bound(struct Graph *g,
             goto next_colour_class;
         }
         struct Weight class_min_wt = residual_wt[u];
-        int col_class_size = 1;
-        col_class[0] = u;
         set_bit(col_class_bitset, u);
         bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
         v = 0;
@@ -127,7 +124,6 @@ void colouring_bound(struct Graph *g,
                         residual_wt, max_permitted_weight, numwords);
                 goto next_colour_class;
             }
-            col_class[col_class_size++] = v;
             set_bit(col_class_bitset, v);
 
             bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
@@ -147,22 +143,23 @@ void colouring_bound(struct Graph *g,
                                     residual_wt, max_permitted_weight, numwords);
                             goto next_colour_class;
                         }
-                        col_class[col_class_size++] = v;
                     }
                 }
                 break;
             }
         }
         bound = weight_sum(bound, class_min_wt);
-        for (int i=0; i<numwords; i++)
-            prev_col_class_bitset[i] = 0;
-        for (int i=0; i<col_class_size; i++) {
-            int w = col_class[i];
-            set_bit(prev_col_class_bitset, w);
-            weight_subtract(&residual_wt[w], class_min_wt);
-            if (weight_eq_zero(residual_wt[w])) {
-                unset_bit(to_colour, w);
-                --pc;
+        for (int i=0; i<numwords; i++) {
+            unsigned long long word = col_class_bitset[i];
+            while (word) {
+                int bit = __builtin_ctzll(word);
+                word ^= (1ull << bit);
+                int w = i * BITS_PER_WORD + bit;
+                weight_subtract(&residual_wt[w], class_min_wt);
+                if (weight_eq_zero(residual_wt[w])) {
+                    unset_bit(to_colour, w);
+                    --pc;
+                }
             }
         }
         copy_bitset(col_class_bitset, prev_col_class_bitset, numwords);
@@ -170,8 +167,6 @@ next_colour_class:
         ;
     }
     free(residual_wt);
-    free(col_class);
-
     free(to_colour);
     free(candidates);
     free(col_class_bitset);
