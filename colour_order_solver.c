@@ -135,9 +135,7 @@ void colouring_bound(struct Graph *g,
                 int bit = __builtin_ctzll(word);
                 word ^= (1ull << bit);
                 int w = i * BITS_PER_WORD + bit;
-                if (weight_lt(residual_wt[w], class_min_wt)) {
-                    class_min_wt = residual_wt[w];
-                }
+                update_weight_to_min(&class_min_wt, &residual_wt[w]);
             }
         }
         bound = weight_sum(bound, class_min_wt);

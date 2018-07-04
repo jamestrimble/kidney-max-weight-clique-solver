@@ -24,6 +24,20 @@ static bool weight_lt(struct Weight const wt0, struct Weight const wt1)
     return false;
 }
 
+static void update_weight_to_min(struct Weight * wt0, struct Weight const * const wt1)
+{
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        if (wt0->weight[i] != wt1->weight[i]) {
+            if (wt0->weight[i] > wt1->weight[i]) {
+                for (int j=i; j<WEIGHT_SIZE; j++) {
+                    wt0->weight[j] = wt1->weight[j];
+                }
+            }
+            return;
+        }
+    }
+}
+
 static bool weight_gt(struct Weight const wt0, struct Weight const wt1)
 {
     for (int i=0; i<WEIGHT_SIZE; i++) {
