@@ -86,13 +86,6 @@ static struct Weight weight_difference(struct Weight const wt0, struct Weight co
     return result;
 }
 
-static void weight_subtract(struct Weight * wt0, struct Weight const wt1)
-{
-    for (int i=0; i<WEIGHT_SIZE; i++) {
-        wt0->weight[i] -= wt1.weight[i];
-    }
-}
-
 struct Weight default_weight();
 
 void print_weight(struct Weight const wt);
