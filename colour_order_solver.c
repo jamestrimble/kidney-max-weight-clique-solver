@@ -20,7 +20,11 @@
 
 int make_rand()
 {
-    return rand() % NUM_RANDOM_VALUES;
+    int r;
+    do {
+        r = rand();
+    } while (r >= RAND_MAX / NUM_RANDOM_VALUES * NUM_RANDOM_VALUES);
+    return r % NUM_RANDOM_VALUES;
 }
 
 int kth_set_bit(int k, unsigned long long const * const bitset, int numwords)
