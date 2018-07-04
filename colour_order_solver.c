@@ -16,7 +16,7 @@
 #include <string.h>
 #include <time.h>
 
-#define NUM_RANDOM_VALUES 20
+#define NUM_RANDOM_VALUES 30
 
 int make_rand()
 {
