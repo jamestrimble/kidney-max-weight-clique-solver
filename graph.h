@@ -68,6 +68,16 @@ static bool weight_eq_zero(struct Weight const wt0)
     return true;
 }
 
+static bool weight_leq_zero(struct Weight const wt0)
+{
+    for (int i=0; i<WEIGHT_SIZE; i++) {
+        if (wt0.weight[i] != 0) {
+            return wt0.weight[i] <= 0;
+        }
+    }
+    return true;
+}
+
 static struct Weight weight_sum(struct Weight const wt0, struct Weight const wt1)
 {
     struct Weight result;

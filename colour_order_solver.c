@@ -114,6 +114,8 @@ void colouring_bound(struct Graph *g,
         bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
         v = 0;
 
+        int z = INT_MAX;
+
         while ((v=first_set_bit_from_word(candidates, v/BITS_PER_WORD, numwords))!=-1) {
             if (weight_gt(residual_wt[v], max_permitted_weight)) {
                 remove_vertices_heavier_than_max_permitted(to_colour, &pc, branch_vv_bitset,
@@ -125,10 +127,10 @@ void colouring_bound(struct Graph *g,
             bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
             if (union_is_subset_of(col_class_bitset, candidates, prev_col_class_bitset, numwords)) {
                 bitset_union_with(col_class_bitset, candidates, numwords);
+                z = v;
                 break;
             }
         }
-        struct Weight class_min_wt = (struct Weight) {{LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX, LONG_MAX}};
 
         int col_class_sz = 0;
         int *col_class = malloc(g->n * sizeof *col_class);
@@ -139,18 +141,36 @@ void colouring_bound(struct Graph *g,
                 word ^= (1ull << bit);
                 int w = i * BITS_PER_WORD + bit;
                 col_class[col_class_sz++] = w;
-                update_weight_to_min(&class_min_wt, &residual_wt[w]);
             }
         }
+
+        struct Weight class_min_wt = residual_wt[u];
+        for (int i=0; i<col_class_sz; i++) {
+            int w = col_class[i];
+            // The following early termination of the loop is an optimisation, which seems
+            // to make the program run a few times faster and shouldn't affect the set of search
+            // nodes visited.  It effectively combines multiple colour classes that would
+            // ordinarily have been produced consecutively into a single colour class with
+            // the union of their vertices and the sum of their weights.  This optimisation
+            // is only invoked if we know that the set of candidates remaining after colouring
+            // z are an independent set (and therefore, the deletion of one of these from to_colour
+            // would not enlarge the set of vertices that can be coloured after z).
+            if (w > z)
+                break;
+            update_weight_to_min(&class_min_wt, &residual_wt[w]);
+        }
+
         bound = weight_sum(bound, class_min_wt);
+
         for (int i=0; i<col_class_sz; i++) {
             int w = col_class[i];
             residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
-            if (weight_eq_zero(residual_wt[w])) {
+            if (weight_leq_zero(residual_wt[w])) {
                 unset_bit(to_colour, w);
                 --pc;
             }
         }
+
         free(col_class);
 
         copy_bitset(col_class_bitset, prev_col_class_bitset, numwords);
