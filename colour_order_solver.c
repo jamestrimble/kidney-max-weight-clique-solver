@@ -210,6 +210,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
 
     int top = 1;
     bool can_backtrack = false;
+
     for (int i=0; i<top; i++) {
         for (int j=0; j<numwords; j++)
             bvvb[j] = 0;
@@ -222,6 +223,24 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         }
         if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
             copy_bitset(bvvb, branch_vv_bitset, numwords);
+
+            unsigned long long *removable = malloc(numwords * sizeof *removable);
+            unsigned long long *vv = malloc(numwords * sizeof *vv);
+
+            copy_bitset(P_bitset, removable, numwords);
+            copy_bitset(branch_vv_bitset, vv, numwords);
+
+            int v;
+            while ((v=first_set_bit(vv, numwords))!=-1) {
+                bitset_intersect_with(removable, g->bit_complement_nd[v], numwords);
+                unset_bit(vv, v);
+            }
+            if (bitset_popcount(removable, numwords)) {
+                bitset_intersect_with_complement(P_bitset, removable, numwords);
+            }
+            free(vv);
+            free(removable);
+
             if (!weight_eq_zero(incumbent->total_wt)) {
                 top = pc * 5;
             }
