@@ -77,6 +77,8 @@ void colouring_bound(struct Graph *g,
     unsigned long long *candidates = malloc(numwords * sizeof *candidates);
     unsigned long long *col_class_bitset = malloc(numwords * sizeof *candidates);
     unsigned long long *prev_col_class_bitset = malloc(numwords * sizeof *candidates);
+    int *col_class = malloc(g->n * sizeof *col_class);
+
     for (int i=0; i<numwords; i++)
         prev_col_class_bitset[i] = 0;
 
@@ -133,7 +135,6 @@ void colouring_bound(struct Graph *g,
         }
 
         int col_class_sz = 0;
-        int *col_class = malloc(g->n * sizeof *col_class);
         for (int i=0; i<numwords; i++) {
             unsigned long long word = col_class_bitset[i];
             while (word) {
@@ -171,13 +172,12 @@ void colouring_bound(struct Graph *g,
             }
         }
 
-        free(col_class);
-
         copy_bitset(col_class_bitset, prev_col_class_bitset, numwords);
 next_colour_class:
         ;
     }
     free(residual_wt);
+    free(col_class);
     free(to_colour);
     free(candidates);
     free(col_class_bitset);
