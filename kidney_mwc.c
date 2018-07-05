@@ -6,7 +6,7 @@
 #include "sorting.h"
 #include "vertex_ordering.h"
 #include "util.h"
-#include "colour_order_solver.h"
+#include "kidney_mwc_solver.h"
 
 #include <argp.h>
 #include <stdbool.h>
