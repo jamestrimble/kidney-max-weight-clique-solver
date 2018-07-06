@@ -202,71 +202,73 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         printf(" at time %ld ms after %ld expand calls\n", elapsed_msec, *expand_call_count);
     }
 
-    struct Weight target = weight_difference(incumbent->total_wt, C->total_wt);
+    if (0 != bitset_popcount(P_bitset, numwords)) {
+        struct Weight target = weight_difference(incumbent->total_wt, C->total_wt);
 
-    unsigned long long *branch_vv_bitset = malloc(numwords * sizeof *branch_vv_bitset);
-    unsigned long long *bvvb = malloc(numwords * sizeof *branch_vv_bitset);
+        unsigned long long *branch_vv_bitset = malloc(numwords * sizeof *branch_vv_bitset);
+        unsigned long long *bvvb = malloc(numwords * sizeof *branch_vv_bitset);
 
-    int top = 1;
-    bool can_backtrack = false;
+        int top = 1;
+        bool can_backtrack = false;
 
-    for (int i=0; i<top; i++) {
-        for (int j=0; j<numwords; j++)
-            bvvb[j] = 0;
-        colouring_bound(g, P_bitset, bvvb, target, numwords);
-        ++(*colouring_count);
-        int pc = bitset_popcount(bvvb, numwords);
-        if (0 == pc) {
-            can_backtrack = true;
-            break;
-        }
-        if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
-            copy_bitset(bvvb, branch_vv_bitset, numwords);
-
-            if (!weight_eq_zero(incumbent->total_wt)) {
-                top = pc * 5;
+        for (int i=0; i<top; i++) {
+            for (int j=0; j<numwords; j++)
+                bvvb[j] = 0;
+            colouring_bound(g, P_bitset, bvvb, target, numwords);
+            ++(*colouring_count);
+            int pc = bitset_popcount(bvvb, numwords);
+            if (0 == pc) {
+                can_backtrack = true;
+                break;
             }
-        }
-        unsigned long long *removable = malloc(numwords * sizeof *removable);
-        unsigned long long *vv = malloc(numwords * sizeof *vv);
+            if (i == 0 || pc < bitset_popcount(branch_vv_bitset, numwords)) {
+                copy_bitset(bvvb, branch_vv_bitset, numwords);
 
-        copy_bitset(P_bitset, removable, numwords);
-        copy_bitset(bvvb, vv, numwords);
+                if (!weight_eq_zero(incumbent->total_wt)) {
+                    top = pc * 5;
+                }
+            }
+            unsigned long long *removable = malloc(numwords * sizeof *removable);
+            unsigned long long *vv = malloc(numwords * sizeof *vv);
 
-        int v;
-        while ((v=first_set_bit(vv, numwords))!=-1) {
-            bitset_intersect_with(removable, g->bit_complement_nd[v], numwords);
-            unset_bit(vv, v);
+            copy_bitset(P_bitset, removable, numwords);
+            copy_bitset(bvvb, vv, numwords);
+
+            int v;
+            while ((v=first_set_bit(vv, numwords))!=-1) {
+                bitset_intersect_with(removable, g->bit_complement_nd[v], numwords);
+                unset_bit(vv, v);
+            }
+            if (bitset_popcount(removable, numwords)) {
+                bitset_intersect_with_complement(P_bitset, removable, numwords);
+            }
+            free(vv);
+            free(removable);
         }
-        if (bitset_popcount(removable, numwords)) {
-            bitset_intersect_with_complement(P_bitset, removable, numwords);
+
+        if (!can_backtrack) {
+            bitset_intersect_with_complement(P_bitset, branch_vv_bitset, numwords);
+
+            unsigned long long *new_P_bitset = malloc(numwords * sizeof *new_P_bitset);
+
+            int v;
+            while ((v=first_set_bit(branch_vv_bitset, numwords))!=-1) {
+                unset_bit(branch_vv_bitset, v);
+
+                copy_bitset(P_bitset, new_P_bitset, numwords);
+                bitset_intersect_with_complement(new_P_bitset, g->bit_complement_nd[v], numwords);
+
+                vtxlist_push_vtx(g, C, v);
+                expand(g, C, new_P_bitset, incumbent, level+1, expand_call_count, colouring_count, quiet, numwords);
+                set_bit(P_bitset, v);
+                vtxlist_pop_vtx(g, C);
+            }
+            free(new_P_bitset);
         }
-        free(vv);
-        free(removable);
+
+        free(bvvb);
+        free(branch_vv_bitset);
     }
-
-    if (!can_backtrack) {
-        bitset_intersect_with_complement(P_bitset, branch_vv_bitset, numwords);
-
-        unsigned long long *new_P_bitset = malloc(numwords * sizeof *new_P_bitset);
-
-        int v;
-        while ((v=first_set_bit(branch_vv_bitset, numwords))!=-1) {
-            unset_bit(branch_vv_bitset, v);
-
-            copy_bitset(P_bitset, new_P_bitset, numwords);
-            bitset_intersect_with_complement(new_P_bitset, g->bit_complement_nd[v], numwords);
-
-            vtxlist_push_vtx(g, C, v);
-            expand(g, C, new_P_bitset, incumbent, level+1, expand_call_count, colouring_count, quiet, numwords);
-            set_bit(P_bitset, v);
-            vtxlist_pop_vtx(g, C);
-        }
-        free(new_P_bitset);
-    }
-
-    free(bvvb);
-    free(branch_vv_bitset);
 }
 
 void mc(struct Graph* g, long *expand_call_count, long *colouring_count,
