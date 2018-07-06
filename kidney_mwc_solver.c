@@ -82,6 +82,9 @@ void colouring_bound(struct Graph *g,
     for (int i=0; i<numwords; i++)
         prev_col_class_bitset[i] = 0;
 
+    int last_v = last_set_bit(P_bitset, numwords);
+    numwords = last_v / BITS_PER_WORD + 1;
+
     copy_bitset(P_bitset, to_colour, numwords);
 
     int u = -1;
@@ -89,7 +92,7 @@ void colouring_bound(struct Graph *g,
     struct Weight bound = {};
 
     struct Weight *residual_wt = malloc(g->n * sizeof *residual_wt);
-    memcpy(residual_wt, g->weight, g->n * sizeof(*residual_wt));
+    memcpy(residual_wt, g->weight, (last_v+1) * sizeof(*residual_wt));
 
     int pc = bitset_popcount(to_colour, numwords);
 
