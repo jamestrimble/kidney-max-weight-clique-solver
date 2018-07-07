@@ -196,7 +196,7 @@ int cmp_fun(const void *pa, const void *pb)
         return 1;
     if (weight_gt(global_g->weight[a], global_g->weight[b]))
         return -1;
-    return 0;
+    return a - b;
 }
 
 void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
