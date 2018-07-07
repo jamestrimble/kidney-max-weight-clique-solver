@@ -50,7 +50,7 @@ static bool weight_gt(struct Weight const wt0, struct Weight const wt1)
 
 static bool weight_eq(struct Weight const wt0, struct Weight const wt1)
 {
-    for (int i=WEIGHT_SIZE; i--; ) {
+    for (int i=0; i<WEIGHT_SIZE; i++) {
         if (wt0.weight[i] != wt1.weight[i]) {
             return false;
         }
@@ -60,7 +60,7 @@ static bool weight_eq(struct Weight const wt0, struct Weight const wt1)
 
 static bool weight_eq_zero(struct Weight const wt0)
 {
-    for (int i=WEIGHT_SIZE; i--; ) {
+    for (int i=0; i<WEIGHT_SIZE; i++) {
         if (wt0.weight[i] != 0) {
             return false;
         }
