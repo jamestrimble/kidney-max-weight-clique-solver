@@ -186,6 +186,19 @@ next_colour_class:
     free(prev_col_class_bitset);
 }
 
+struct Graph *global_g;
+
+int cmp_fun(const void *pa, const void *pb)
+{
+    int a = *(int *)pa;
+    int b = *(int *)pb;
+    if (weight_lt(global_g->weight[a], global_g->weight[b]))
+        return 1;
+    if (weight_gt(global_g->weight[a], global_g->weight[b]))
+        return -1;
+    return 0;
+}
+
 void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
         struct VtxList *incumbent, int level,
         long *expand_call_count,
@@ -254,8 +267,23 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
 
             unsigned long long *new_P_bitset = malloc(numwords * sizeof *new_P_bitset);
 
-            int v;
-            while ((v=first_set_bit(branch_vv_bitset, numwords))!=-1) {
+            int *branch_vv = malloc(g->n * sizeof *branch_vv);
+            int branch_vv_sz = 0;
+            for (int i=0; i<numwords; i++) {
+                unsigned long long word = branch_vv_bitset[i];
+                while (word) {
+                    int bit = __builtin_ctzll(word);
+                    word ^= (1ull << bit);
+                    int w = i * BITS_PER_WORD + bit;
+                    branch_vv[branch_vv_sz++] = w;
+                }
+            }
+
+            global_g = g;
+            qsort(branch_vv, branch_vv_sz, sizeof(int), cmp_fun);
+
+            for (int j=0; j<branch_vv_sz; j++) {
+                int v = branch_vv[j];
                 unset_bit(branch_vv_bitset, v);
 
                 copy_bitset(P_bitset, new_P_bitset, numwords);
@@ -266,6 +294,7 @@ void expand(struct Graph *g, struct VtxList *C, unsigned long long *P_bitset,
                 set_bit(P_bitset, v);
                 vtxlist_pop_vtx(g, C);
             }
+            free(branch_vv);
             free(new_P_bitset);
         }
 
