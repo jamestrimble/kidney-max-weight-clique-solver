@@ -87,8 +87,6 @@ void colouring_bound(struct Graph *g,
 
     copy_bitset(P_bitset, to_colour, numwords);
 
-    int u = -1;
-    int v;
     struct Weight bound = {};
 
     struct Weight *residual_wt = malloc(g->n * sizeof *residual_wt);
@@ -97,86 +95,85 @@ void colouring_bound(struct Graph *g,
     int pc = bitset_popcount(to_colour, numwords);
 
     while (0 != pc) {
-        struct Weight max_permitted_weight = weight_difference(target, bound);
-        if (u == -1 || !test_bit(to_colour, u)) {
-            if (pc >= NUM_RANDOM_VALUES) {
-                int rand_num = make_rand();
-                u = kth_set_bit(rand_num + 1, to_colour, numwords);
-            } else {
-                u=first_set_bit(to_colour, numwords);
-            }
-        }
-        for (int i=0; i<numwords; i++)
-            col_class_bitset[i] = 0;
-        copy_bitset(to_colour, candidates, numwords);
-        if (weight_gt(residual_wt[u], max_permitted_weight)) {
-            remove_vertices_heavier_than_max_permitted(to_colour, &pc, branch_vv_bitset,
-                    residual_wt, max_permitted_weight, numwords);
-            goto next_colour_class;
-        }
-        set_bit(col_class_bitset, u);
-        bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
-        v = 0;
+        int u = pc >= NUM_RANDOM_VALUES ?
+                kth_set_bit(make_rand() + 1, to_colour, numwords) :
+                first_set_bit(to_colour, numwords);
 
-        int z = INT_MAX;
-
-        while ((v=first_set_bit_from_word(candidates, v/BITS_PER_WORD, numwords))!=-1) {
-            if (weight_gt(residual_wt[v], max_permitted_weight)) {
+        while (test_bit(to_colour, u)) {
+            struct Weight max_permitted_weight = weight_difference(target, bound);
+            for (int i=0; i<numwords; i++)
+                col_class_bitset[i] = 0;
+            copy_bitset(to_colour, candidates, numwords);
+            if (weight_gt(residual_wt[u], max_permitted_weight)) {
                 remove_vertices_heavier_than_max_permitted(to_colour, &pc, branch_vv_bitset,
                         residual_wt, max_permitted_weight, numwords);
                 goto next_colour_class;
             }
-            set_bit(col_class_bitset, v);
+            set_bit(col_class_bitset, u);
+            bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
 
-            bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
-            if (union_is_subset_of(col_class_bitset, candidates, prev_col_class_bitset, numwords)) {
-                bitset_union_with(col_class_bitset, candidates, numwords);
-                z = v;
-                break;
+            int v = 0;
+
+            int z = INT_MAX;
+
+            while ((v=first_set_bit_from_word(candidates, v/BITS_PER_WORD, numwords))!=-1) {
+                if (weight_gt(residual_wt[v], max_permitted_weight)) {
+                    remove_vertices_heavier_than_max_permitted(to_colour, &pc, branch_vv_bitset,
+                            residual_wt, max_permitted_weight, numwords);
+                    goto next_colour_class;
+                }
+                set_bit(col_class_bitset, v);
+
+                bitset_intersect_with_from_word(candidates, g->bit_complement_nd[v], v/BITS_PER_WORD, numwords);
+                if (union_is_subset_of(col_class_bitset, candidates, prev_col_class_bitset, numwords)) {
+                    bitset_union_with(col_class_bitset, candidates, numwords);
+                    z = v;
+                    break;
+                }
             }
-        }
 
-        int col_class_sz = 0;
-        for (int i=0; i<numwords; i++) {
-            unsigned long long word = col_class_bitset[i];
-            while (word) {
-                int bit = __builtin_ctzll(word);
-                word ^= (1ull << bit);
-                int w = i * BITS_PER_WORD + bit;
-                col_class[col_class_sz++] = w;
+            int col_class_sz = 0;
+            for (int i=0; i<numwords; i++) {
+                unsigned long long word = col_class_bitset[i];
+                while (word) {
+                    int bit = __builtin_ctzll(word);
+                    word ^= (1ull << bit);
+                    int w = i * BITS_PER_WORD + bit;
+                    col_class[col_class_sz++] = w;
+                }
             }
-        }
 
-        struct Weight class_min_wt = residual_wt[u];
-        for (int i=0; i<col_class_sz; i++) {
-            int w = col_class[i];
-            // The following early termination of the loop is an optimisation, which seems
-            // to make the program run a few times faster and shouldn't affect the set of search
-            // nodes visited.  It effectively combines multiple colour classes that would
-            // ordinarily have been produced consecutively into a single colour class with
-            // the union of their vertices and the sum of their weights.  This optimisation
-            // is only invoked if we know that the set of candidates remaining after colouring
-            // z are an independent set (and therefore, the deletion of one of these from to_colour
-            // would not enlarge the set of vertices that can be coloured after z).
-            if (w > z)
-                break;
-            update_weight_to_min(&class_min_wt, &residual_wt[w]);
-        }
-
-        bound = weight_sum(bound, class_min_wt);
-
-        for (int i=0; i<col_class_sz; i++) {
-            int w = col_class[i];
-            residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
-            if (weight_leq_zero(residual_wt[w])) {
-                unset_bit(to_colour, w);
-                --pc;
+            struct Weight class_min_wt = residual_wt[u];
+            for (int i=0; i<col_class_sz; i++) {
+                int w = col_class[i];
+                // The following early termination of the loop is an optimisation, which seems
+                // to make the program run a few times faster and shouldn't affect the set of search
+                // nodes visited.  It effectively combines multiple colour classes that would
+                // ordinarily have been produced consecutively into a single colour class with
+                // the union of their vertices and the sum of their weights.  This optimisation
+                // is only invoked if we know that the set of candidates remaining after colouring
+                // z are an independent set (and therefore, the deletion of one of these from to_colour
+                // would not enlarge the set of vertices that can be coloured after z).
+                if (w > z)
+                    break;
+                update_weight_to_min(&class_min_wt, &residual_wt[w]);
             }
-        }
 
-        copy_bitset(col_class_bitset, prev_col_class_bitset, numwords);
+            bound = weight_sum(bound, class_min_wt);
+
+            for (int i=0; i<col_class_sz; i++) {
+                int w = col_class[i];
+                residual_wt[w] = weight_difference(residual_wt[w], class_min_wt);
+                if (weight_leq_zero(residual_wt[w])) {
+                    unset_bit(to_colour, w);
+                    --pc;
+                }
+            }
+
+            copy_bitset(col_class_bitset, prev_col_class_bitset, numwords);
 next_colour_class:
-        ;
+            ;
+        }
     }
     free(residual_wt);
     free(col_class);
