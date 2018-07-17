@@ -101,15 +101,15 @@ void colouring_bound(struct Graph *g,
 
         while (test_bit(to_colour, u)) {
             struct Weight max_permitted_weight = weight_difference(target, bound);
-            for (int i=0; i<numwords; i++)
-                col_class_bitset[i] = 0;
-            copy_bitset(to_colour, candidates, numwords);
             if (weight_gt(residual_wt[u], max_permitted_weight)) {
                 remove_vertices_heavier_than_max_permitted(to_colour, &pc, branch_vv_bitset,
                         residual_wt, max_permitted_weight, numwords);
                 goto next_colour_class;
             }
+            for (int i=0; i<numwords; i++)
+                col_class_bitset[i] = 0;
             set_bit(col_class_bitset, u);
+            copy_bitset(to_colour, candidates, numwords);
             bitset_intersect_with(candidates, g->bit_complement_nd[u], numwords);
 
             int v = 0;
