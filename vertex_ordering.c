@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "bitset.h"
 #include "graph.h"
 #include "sorting.h"
 #include "util.h"
@@ -12,7 +13,7 @@ void calc_weighted_degs(struct Graph *g, struct Weight *residual_weighted_deg) {
     for (int i=0; i<g->n; i++) {
         residual_weighted_deg[i] = (struct Weight) {};
         for (int j=0; j<g->n; j++) {
-            if (g->adjmat[i][j]) {
+            if (!test_bit(g->bit_complement_nd[i], j) && i != j) {
                 residual_weighted_deg[i] = weight_sum(residual_weighted_deg[i], g->weight[j]);
             }
         }
@@ -41,7 +42,7 @@ void carraghan_pardalos_order(int *vv, struct Graph *g, bool reverse) {
 
         for (int j=i+1; j<g->n; j++) {
             int w = vv[j];
-            if (g->adjmat[v][w])
+            if (!test_bit(g->bit_complement_nd[v], w) && v != w)
                 residual_weighted_deg[w] = weight_difference(residual_weighted_deg[w], g->weight[v]);
         }
     }

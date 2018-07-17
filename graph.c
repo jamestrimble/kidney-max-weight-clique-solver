@@ -22,24 +22,13 @@ void print_weight(struct Weight const wt)
 }
 
 void add_edge(struct Graph *g, int v, int w) {
-    g->adjmat[v][w] = true;
-    g->adjmat[w][v] = true;
+    unset_bit(g->bit_complement_nd[v], w);
+    unset_bit(g->bit_complement_nd[w], v);
 }
 
 void calculate_all_degrees(struct Graph *g) {
     for (int v=0; v<g->n; v++) {
-        g->degree[v] = 0;
-        for (int w=0; w<g->n; w++)
-            g->degree[v] += g->adjmat[v][w];
-    }
-}
-
-void populate_bit_complement_nd(struct Graph *g) {
-    for (int i=0; i<g->n; i++) {
-        for (int j=0; j<g->n; j++) {
-            if (!g->adjmat[i][j] && i!=j)
-                set_bit(g->bit_complement_nd[i], j);
-        }
+        g->degree[v] = g->n - 1 - bitset_popcount(g->bit_complement_nd[v], (g->n+BITS_PER_WORD-1)/BITS_PER_WORD);
     }
 }
 
@@ -53,7 +42,7 @@ bool check_clique(struct Graph* g, struct VtxList* clq) {
 
     for (int i=0; i<clq->size-1; i++)
         for (int j=i+1; j<clq->size; j++)
-            if (!g->adjmat[clq->vv[i]][clq->vv[j]])
+            if (test_bit(g->bit_complement_nd[clq->vv[i]], clq->vv[j]))
                 return false;
     return true;
 }
@@ -64,24 +53,40 @@ struct Graph *new_graph(int n)
     g->n = n;
     g->degree = calloc(n, sizeof(*g->degree));
     g->weight = calloc(n, sizeof(*g->weight));
-    g->adjmat = calloc(n, sizeof(*g->adjmat));
     g->bit_complement_nd = calloc(n, sizeof(*g->bit_complement_nd));
     for (int i=0; i<n; i++) {
-        g->adjmat[i] = calloc(n, sizeof *g->adjmat[i]);
         g->bit_complement_nd[i] = calloc((n+BITS_PER_WORD-1)/BITS_PER_WORD, sizeof *g->bit_complement_nd[i]);
     }
+
+    // initialise bit_complement_nd
+    unsigned long long *bit_complement_nd_template = calloc((n+BITS_PER_WORD-1)/BITS_PER_WORD, sizeof *bit_complement_nd_template);
+    int word = 0;
+    int remaining = n;
+    while (remaining >= 64) {
+        bit_complement_nd_template[word++] = ~0ull;
+        remaining -= 64;
+    }
+    for (int i=0; i<remaining; i++) {
+        bit_complement_nd_template[word] |= (1ull << i);
+    }
+    for (int i=0; i<n; i++) {
+        for (int j=0; j<(n+BITS_PER_WORD-1)/BITS_PER_WORD; j++) {
+            g->bit_complement_nd[i][j] = bit_complement_nd_template[j];
+        }
+        unset_bit(g->bit_complement_nd[i], i);
+    }
+    free(bit_complement_nd_template);
+
     return g;
 }
 
 void free_graph(struct Graph *g)
 {
     for (int i=0; i<g->n; i++) {
-        free(g->adjmat[i]);
         free(g->bit_complement_nd[i]);
     }
     free(g->degree);
     free(g->weight);
-    free(g->adjmat);
     free(g->bit_complement_nd);
     free(g);
 }
@@ -90,7 +95,8 @@ struct Graph *induced_subgraph(struct Graph *g, int *vv, int vv_len) {
     struct Graph* subg = new_graph(vv_len);
     for (int i=0; i<subg->n; i++)
         for (int j=0; j<subg->n; j++)
-            subg->adjmat[i][j] = g->adjmat[vv[i]][vv[j]];
+            if (!test_bit(g->bit_complement_nd[vv[i]], vv[j]))
+                unset_bit(subg->bit_complement_nd[i], j);
 
     for (int i=0; i<subg->n; i++)
         subg->weight[i] = g->weight[vv[i]];

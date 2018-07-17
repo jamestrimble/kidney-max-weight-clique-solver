@@ -311,7 +311,6 @@ void mc(struct Graph* g, long *expand_call_count, long *colouring_count,
     order_vertices(vv, g, vtx_ordering);
 
     struct Graph *ordered_graph = induced_subgraph(g, vv, g->n);
-    populate_bit_complement_nd(ordered_graph);
 
     int numwords = (ordered_graph->n + BITS_PER_WORD - 1) / BITS_PER_WORD;
 

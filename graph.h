@@ -104,7 +104,6 @@ struct Graph {
     int n;
     int *degree;
     struct Weight *weight;
-    bool **adjmat;
     unsigned long long **bit_complement_nd;
 };
 
@@ -130,8 +129,6 @@ void calculate_all_degrees(struct Graph *g);
 
 // Checks if a set of vertices induces a clique
 bool check_clique(struct Graph* g, struct VtxList* clq);
-
-void populate_bit_complement_nd(struct Graph *g);
 
 struct Graph *induced_subgraph(struct Graph *g, int *vv, int vv_len);
 
